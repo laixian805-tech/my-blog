@@ -1,0 +1,140 @@
+﻿---
+title: 'BUUCTF 打靶笔记'
+date: '2026-01-22'
+summary: '整理 BUUCTF Web 方向题目的通关过程，重点记录文件包含、代码审计和常见利用思路。'
+authors:
+  - 'default'
+layout: PostLayout
+---
+
+### web篇：
+
+参考链接：[【CTF】buuctf web 详解（持续更新）-CSDN博客](https://blog.csdn.net/m0_52923241/article/details/119641325)
+
+#### 1. **题目名称**：[ACTF2020 新生赛]Include
+
+- **漏洞类型**：文件包含漏洞
+- **技术点**：PHP封装协议（PHP Wrappers）
+
+##### **PHP封装协议的作用**
+
+```
+php://filter/read=convert.base64-encode/resource=xxx.php
+```
+
+这个协议允许读取文件内容并进行处理：
+
+- **`php://filter`**：PHP内置的过滤器协议
+- **`read=convert.base64-encode`**：指定读取时使用base64编码过滤器
+- **`resource=flag.php`**：指定要读取的资源文件
+
+##### **为什么需要base64编码？**
+
+如果不进行base64编码直接读取PHP文件，服务器会将其作为PHP代码执行。通过base64编码：
+
+- PHP代码不会被直接执行
+- 我们可以获取到编码后的源代码
+- 解码后就能看到完整的源代码内容
+
+##### **攻击Payload**
+
+text
+
+```
+/?file=php://filter/read=convert.base64-encode/resource=flag.php
+```
+
+#### 2. [HCTF 2018]WarmUp
+
+代码审计
+
+##### 代码功能分析
+
+这是一个文件包含功能的实现，主要包含：
+
+1. `emmm::checkFile()` 方法：用于检查文件是否在白名单内
+
+2. 白名单：`source.php` 和 `hint.php`
+
+3. 如果检查通过，则包含用户指定的文件
+
+##### 1. 白名单检查逻辑
+
+php
+
+```
+$whitelist = ["source"=>"source.php","hint"=>"hint.php"];
+```
+
+##### 2. 检查流程（三次机会）
+
+第一次检查：直接匹配
+
+php
+
+```
+if (in_array($page, $whitelist)) {
+    return true;
+}
+```
+
+##### 第二次检查：截取`?`之前的部分
+
+php
+
+```
+$_page = mb_substr($page, 0, mb_strpos($page . '?', '?'));
+if (in_array($_page, $whitelist)) {
+    return true;
+}
+```
+
+##### 第三次检查：URL解码后再截取
+
+php
+
+```
+$_page = urldecode($page);
+$_page = mb_substr($_page, 0, mb_strpos($_page . '?', '?'));
+if (in_array($_page, $whitelist)) {
+    return true;
+}
+```
+
+绕过方法
+
+##### 关键点：截取逻辑的缺陷
+
+`mb_strpos($page . '?', '?')` 会在字符串后添加`?`，然后查找`?`的位置：
+
+- 如果`$page`中没有`?`，则返回字符串长度（因为添加的`?`在末尾）
+- 这样`mb_substr`会截取整个字符串
+
+##### 漏洞利用：利用`?`截取和URL解码
+
+我们可以构造这样的payload：
+
+text
+
+```
+?file=source.php?/../../../../etc/passwd
+或
+?file=source.php?/../../../flag
+```
+
+##### 利用原理：
+
+1. **第一次检查**：`source.php?/../../../../etc/passwd` 不在白名单 → 失败
+2. **第二次检查**：截取`?`之前的部分 → `source.php` → 在白名单中 → 通过！
+3. 但是最终包含的是完整的 `$_REQUEST['file']`，即 `source.php?/../../../../etc/passwd`
+
+##### 为什么这样能工作？
+
+- PHP在包含文件时，会将`?`后面的内容当作查询字符串，但**目录遍历依然有效**
+- 实际包含的是 `source.php?/../../../../etc/passwd`
+- 在文件系统中，`?`被当作普通字符处理，所以会尝试包含名为 `source.php?/../../../../etc/passwd` 的文件
+- 通过目录遍历可以访问其他文件
+
+### 3. [强网杯 2019]随便注
+
+参考链接：[BUUCTF[强网杯 2019\]随便注 的三种解法-CSDN博客](https://blog.csdn.net/qq_44657899/article/details/103239145)

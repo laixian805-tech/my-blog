@@ -1,23 +1,23 @@
 import { ReactNode } from 'react'
 import { formatDate } from 'pliny/utils/formatDate'
 import { CoreContent } from 'pliny/utils/contentlayer'
-import type { Blog } from 'contentlayer/generated'
-import Comments from '@/components/Comments'
+import type { Blog, SecurityNote } from 'contentlayer/generated'
 import Link from '@/components/Link'
 import PageTitle from '@/components/PageTitle'
+import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 import SectionContainer from '@/components/SectionContainer'
 import siteMetadata from '@/data/siteMetadata'
-import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 
 interface LayoutProps {
-  content: CoreContent<Blog>
+  content: CoreContent<Blog | SecurityNote>
   children: ReactNode
   next?: { path: string; title: string }
   prev?: { path: string; title: string }
+  toc?: Blog['toc'] | SecurityNote['toc']
 }
 
-export default function PostLayout({ content, next, prev, children }: LayoutProps) {
-  const { path, slug, date, title } = content
+export default function PostSimple({ content, next, prev, children }: LayoutProps) {
+  const { date, title } = content
 
   return (
     <SectionContainer>
@@ -28,7 +28,7 @@ export default function PostLayout({ content, next, prev, children }: LayoutProp
             <div className="space-y-1 border-b border-gray-200 pb-10 text-center dark:border-gray-700">
               <dl>
                 <div>
-                  <dt className="sr-only">Published on</dt>
+                  <dt className="sr-only">发布日期</dt>
                   <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-400">
                     <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
                   </dd>
@@ -43,30 +43,25 @@ export default function PostLayout({ content, next, prev, children }: LayoutProp
             <div className="divide-y divide-gray-200 xl:col-span-3 xl:row-span-2 xl:pb-0 dark:divide-gray-700">
               <div className="prose dark:prose-invert max-w-none pt-10 pb-8">{children}</div>
             </div>
-            {siteMetadata.comments && (
-              <div className="pt-6 pb-6 text-center text-gray-700 dark:text-gray-300" id="comment">
-                <Comments slug={slug} />
-              </div>
-            )}
             <footer>
               <div className="flex flex-col text-sm font-medium sm:flex-row sm:justify-between sm:text-base">
-                {prev && prev.path && (
+                {prev?.path && (
                   <div className="pt-4 xl:pt-8">
                     <Link
                       href={`/${prev.path}`}
                       className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
-                      aria-label={`Previous post: ${prev.title}`}
+                      aria-label={`上一篇：${prev.title}`}
                     >
                       &larr; {prev.title}
                     </Link>
                   </div>
                 )}
-                {next && next.path && (
+                {next?.path && (
                   <div className="pt-4 xl:pt-8">
                     <Link
                       href={`/${next.path}`}
                       className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
-                      aria-label={`Next post: ${next.title}`}
+                      aria-label={`下一篇：${next.title}`}
                     >
                       {next.title} &rarr;
                     </Link>

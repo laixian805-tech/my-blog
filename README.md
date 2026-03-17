@@ -1,344 +1,558 @@
-![tailwind-nextjs-banner](/public/static/images/twitter-card.png)
+# tlx 的中文知识博客
 
-# Tailwind Nextjs Starter Blog
+这是你当前正在维护的个人知识博客项目。站点基于 Next.js、MDX、Tailwind CSS 和 Contentlayer 搭建，内容以中文为主，顶部导航保持英文入口：
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/timlrx/tailwind-nextjs-starter-blog?style=social)](https://GitHub.com/timlrx/tailwind-nextjs-starter-blog/stargazers/)
-[![GitHub forks](https://img.shields.io/github/forks/timlrx/tailwind-nextjs-starter-blog?style=social)](https://github.com/timlrx/tailwind-nextjs-starter-blog/forks)
-[![Twitter URL](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Ftwitter.com%2Ftimlrxx)](https://x.com/timlrxx)
-[![Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/timlrx)](https://github.com/sponsors/timlrx)
+`Home / Blog / Nav / Projects / Security`
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/external?repository-url=https://github.com/timlrx/tailwind-nextjs-starter-blog)
+当前站点已经按你的需求做了这些定制：
 
-This is a [Next.js](https://nextjs.org/), [Tailwind CSS](https://tailwindcss.com/) blogging starter template. Version 2 is based on Next App directory with [React Server Component](https://nextjs.org/docs/getting-started/react-essentials#server-components) and uses [Contentlayer](https://www.contentlayer.dev/) to manage markdown content.
+- `Nav` 页面替代了原来的标签体系，用作个人常用网站导航门户
+- `Security` 页面替代了原来的 `About` 主入口，专门展示网安靶场与漏洞练习笔记
+- 顶栏加入了全站搜索，可同时搜索普通博客文章和 Security 笔记
+- 文章详情页支持目录：桌面端右侧吸顶，手机端折叠展开
+- 首页加入了 `Busuanzi` 访问统计
+- 默认作者头像已切换为项目内的微信头像图片
+- `Tags`、评论、订阅等首版不需要的能力已下线
 
-Probably the most feature-rich Next.js markdown blogging template out there. Easily configurable and customizable. Perfect as a replacement to existing Jekyll and Hugo individual blogs.
+## 1. 当前页面结构
 
-Check out the documentation below to get started.
+- `/`：首页，展示最新普通博客文章和站点访问统计
+- `/blog`：普通博客文章列表
+- `/blog/[slug]`：普通博客文章详情页
+- `/nav`：导航门户页，左侧分类，右侧站点卡片
+- `/projects`：项目页
+- `/security`：网安笔记列表页
+- `/security/[slug]`：网安笔记详情页
+- `/search?q=关键词`：站内搜索结果页
+- `/about`：已永久跳转到 `/security`
 
-Facing issues? Check the [FAQ page](https://github.com/timlrx/tailwind-nextjs-starter-blog/wiki) and do a search on past issues. Feel free to open a new issue if none has been posted previously.
+说明：
 
-Feature request? Check the past discussions to see if it has been brought up previously. Otherwise, feel free to start a new discussion thread. All ideas are welcomed!
+- `Security` 区内容不会进入 `/blog` 列表，也不会出现在首页最新文章中
+- `/nav` 已移除页面内搜索和首屏横幅，筛选只保留分类切换
+- 搜索入口已统一放到全站顶栏和移动端菜单顶部
 
-## Variations
+## 2. 技术栈
 
-**Note**: These are community contributed forks using different frameworks or with significant changes to the codebase - not officially supported.
+- Next.js 15
+- React 19
+- Tailwind CSS 4
+- Contentlayer 2
+- MDX
+- Pliny UI
+- Yarn 3
 
-Astro alternative - [Tailwind Astro Template](https://github.com/wanoo21/tailwind-astro-starting-blog).
+## 3. 目录结构
 
-Remix-run alternative - [Tailwind Remix-run Starter Blog Template](https://github.com/SangeetAgarwal/tailwind-remix-run-mdxjs-typescript-starter-blog).
+后续最常改的目录和文件如下：
 
-Internationalization support - [Template with i18n](https://tailwind-nextjs-starter-blog-i18n.vercel.app/) and [source code](https://github.com/PxlSyl/tailwind-nextjs-starter-blog-i18n/tree/main).
+```text
+app/
+  page.tsx                    首页
+  blog/                       普通博客路由
+  nav/                        导航门户页
+  projects/                   项目页
+  search/                     全站搜索结果页
+  security/                   网安笔记列表与详情页
+  about/page.tsx              旧 About 到 /security 的跳转
 
-## Examples V2
+components/
+  Header.tsx                  顶栏
+  MobileNav.tsx               手机端菜单
+  SiteSearchForm.tsx          顶栏搜索表单
+  HomeSiteStats.tsx           首页访问统计
+  BlogToc.tsx                 文章目录
+  nav/NavPortal.tsx           导航门户主体
 
-- [Demo Blog](https://tailwind-nextjs-starter-blog.vercel.app/) - this repo
-- [My personal blog](https://www.timlrx.com) - modified to auto-generate blog posts with dates
-- [Karhdo's Blog](https://karhdo.dev) - Karhdo's Blog - Karhdo's Coding Adventure ([source code](https://github.com/Karhdo/karhdo.dev))
-- [SOTO's Blog](https://www.atksoto.com/) - A more personalized personal website upgraded from V1 ([source code](https://github.com/acsoto/soto-blog-nextjs))
-- [Prabhu's Blog](https://v1-prabhukirankonda.vercel.app) - Prabhu's Personal website with blog ([source code](https://github.com/prabhukiran8790/prabhukirankonda))
-- [Rabby Hasan's Blog](https://blog.rabbyhasan.com.bd/) - Rabby Hasan's personal blog about full stack development with cloud ([source code](https://github.com/rabbyalone/myblog))
-- [enscribe.dev](https://enscribe.dev) - enscribe's personal blog; cybersecurity shenanigans, frontend webdev, etc. ([source code](https://github.com/jktrn/enscribe.dev))
-- [dalelarroder.com](https://dalelarroder.com) - Dale Larroder's personal website upgraded from V1 ([source code](https://github.com/dlarroder/dalelarroder))
-- [thetalhatahir.com](https://www.thetalhatahir.com) - Talha Tahir's personal blog. Added article thumbnails, linkedIn card, Beautiful hero content, technology emoticons.
-- [homing.so](https://homing.so) - Homing's personal blog about the stuff he's learning ([source code](https://github.com/hominsu/blog))
-- [zS1m's Blog](https://contrails.space) - zS1m's personal blog for recording and sharing daily learning technical content ([source code](https://github.com/zS1m/nextjs-contrails))
-- [dariuszwozniak.net](https://dariuszwozniak.net/) - Software development blog ([source code](https://github.com/dariusz-wozniak/dariuszwozniak.net-v2))
-- [dreams.plus](https://dreams.plus) - Blog site for some thoughts and records for life and technology.
-- [francisaguilar.co blog](https://francisaguilar.co) - Francis Aguilar's personal blog that talks about tech, fitness, and personal development.
-- [Min71 Dev Blog](https://min71.dev) - Personal blog about Blockchain, Development and etc. ([source code](https://github.com/mingi3442/blog))
-- [Bryce Yu's Blog](https://earayu.github.io/) - Bryce Yu's personal Blog about distributed system, database, and web development. ([source code](https://github.com/earayu/earayu.github.io))
-- [Remote Startup Senpai Anime Series Website](https://remote-startup-senpai.com) - Landing page for the anime series Remote Startup Senpai.
-- [Secret Base](https://www.jachsu.com/) - Jac Hsu's personal Blog.talks about tech, thought, and life in general.
-- [Zsebinformatikus](https://www.zsebinformatikus.hu/) - The information superhighway guide blog.
-- [Anton Morgunov's Blog](https://blog.ischemist.com/) - talking about science without oversimplifications or why theoretical and computational chemistry is cool.
-- [Hans Blog](https://www.hansking.cn/) - Hans' personal blog, front-end technology, gallery and travel diary 中文. ([source code](https://github.com/hansking98/hans-nextjs-blog))
-- [London Tech Talk](https://london-tech-talk.com/) - A podcast exploring technology trends and expatriate living experiences. - 日本語
-- [CRUD Flow Blog](http://blog.ndamulelo.co.za/) - A technical blog about AI, Cloud Engineering, Data Science and Personal development
-- [Trillium's Blog](https://trilliumsmith.com/) - Modified to render resume pdf on `/resume` page. ([source code](https://github.com/trillium/trilliumsmith.com))
-- [Wujie's Blog: 旅行者计划](https://www.wujieli.com/) - Wujie's personal digital garden ([source code](https://github.com/wujieli0207/wujie-blog-next))
-- [Xiaodong's Blog](https://blog.linxiaodong.com) - Xiaodong's personal blog about front-end technology, and life. 「中文」([source code](https://github.com/buxuku/buxuku.github.io))
-- [Azurtelier.com](https://www.azurtelier.com/) - Amos's personal website for tech, music, AI illustrations, etc. [English/中文] ([Source code](https://github.com/AmosChenZixuan/Azurtelier.com))
-- [JoshHaines.com](https://www.JoshHaines.com/) - Personal website for Josh Haines. ([source code](https://github.com/jdhaines/joshhaines))
-- [Jigu's Blog](https://animeirl.top) - Jigu's personal blog about tech, crypto, golang, and life. 「中文」
-- [andrewsam.xyz](https://www.andrewsam.xyz/) - Andrew's Personal website using ShadCN, Prisma, MongoDB, Auth.js, Resume Page, Custom Experience timeline and technologies components. ([source code](https://github.com/andrew-sameh/andrewsam.xyz))
-- [Rulli Damara Putra's Portfolio](https://www.damaraputra.my.id/) - Rully's personal blog and portfolio.
-- [blog.taoluyuan.com 套路猿](https://blog.taoluyuan.com) - A personal tech blog that supports multi-theme switching. 「中英」
-- [LyricsDecode.com](https://lyricsdecode.com) - A song lyrics website offering original lyrics, Romanisation, and English translations with customisable viewing options.
-- [bmacharia.com](https://bmacharia.com/) - Benson Macharia's technical blog about Cybersecurity and IT Risk Management.
-- [armujahid.me](https://armujahid.me/) - Abdul Rauf's personal blog about tech and random stuff.
-- [leohuynh.dev](https://www.leohuynh.dev/) - 🇻🇳 Leo's dev blog – stories, insights, and ideas. Add `/snippets`, `/books` pages, add `ProfileCard`, `CareerTimeline` components and many more. ([source](https://github.com/hta218/leohuynh.dev))
-- [OpenSats Blog](https://opensats.org/blog) - A 501(c)(3) public charity which aims to sustainably fund free and open-source projects. ([source code](https://github.com/OpenSats/website))
-- [Schedles Blog](https://schedles.com/blog) - Social media scheduling tips, strategies, and product updates for content creators. ([Project Link](https://schedles.com))
-- [YawDev Blog](https://yawdev.org/blog) - IT-Agency / Software Development. Blog about tech and business ([Project Link](https://yawdev.org))
-- [Engineering Notes](https://www.jonvet.com) - Jonas Vetterle Personal Website & Blog. I'm writing articles about software engineering that interest me, including AI and Quantum Computing
-- [Screenager.dev](https://screenager.vercel.app) - Personal Website as Portfolio & Blog. Documenting my learning journey and some guides.
-- [kezhenxu94's blog](https://kezhenxu94.me) - Blogging about dev, tips & tricks, tutorials and more.
-- [Parminder's blog](https://singhspeak.com) - Thoughts on software development, life and more.
-- [wheelcircuit.com](https://wheelcircuit.com) - Automotive YouTube News & Videos blog, updated daily.
-- [taitrd.com](https://taitrd.com) - Tai's personal dev blog, technologies and coding activity with Dynamodb practice ([source code](https://github.com/taitrd/taitrd)).
-- [Shelton's Blog](https://www.sheltonma.top) - Sharing insights on TypeScript full-stack development (Next.js, React, Hono, Supabase), web crawlers, and other cutting-edge technologies.
-- [Culture DevOps](https://culturedevops.com/en) - Technical blog on DevOps practices and tools ([source code](https://github.com/CultureDevOps/blog)).
-- [InnovateWire Blog](https://innovatewire.com) - A tech blog about software automation and automation tools ([Project Link](https://innovatewire.com))
-- [MichaelScheiwiller.com](https://www.michaelscheiwiller.com/) - Mix of software and data engineering blog as well as personal notes and updates
-- [Wahyu Ikbal Personal Website](https://www.wahyuikbal.web.id) - Personal website with blog and ai feature, share about Technology literacy ([source code](https://github.com/wahyudesu/Personal-Website-Next-js-Obsidian-Ai-))
-- [ByteGeometry Blog](https://bytegeometry.com/blog) - Software development blog about tech trends and business growth. AI and web-apps development ([Project Link](https://bytegeometry.com))
-- [Farhad's Blog](https://www.farhad.my) - Farhad's personal website sharing tech news and insights on emerging technologies, with a focus on AI and Data Science ([Project Link](https://farhad.my))
-- [Utanzu Cybersecurity](https://utanzu.com/) – A thriving community where mentorship and expert training help cybersecurity professionals unlock their full potential and advance their careers.
-- [trungtmnguyen.com](https://www.trungtmnguyen.com/) - 🇻🇳 Trung's personal and technical blogs – some idea about me, tips, ideas and learned. Add some custom components, like: UnderlineHoverLink, Timeline, neon-border styles and will have more in the future. ([source](https://github.com/trungntm/trungtmnguyen.com))
-- [Ryan Fitton's Blog](https://ryanfitton.co.uk/) – A custom theme version with 'Portfolio' section. Used as a personal Blog/Portfolio for development projects. ([source code](https://github.com/ryanfitton/ryanfitton-nextjs-2024))
-- [ktovoz.com](https://www.ktovoz.com/) - Kto's personal blog, sharing life, technology. Added article categories and article directory navigation 「中文」
+data/
+  authors/default.mdx         默认作者资料
+  blog/*.mdx                  普通博客文章
+  security/*.mdx              网安笔记
+  headerNavLinks.ts           顶部导航
+  portalData.ts               导航门户数据源
+  projectsData.ts             项目页卡片数据
+  siteMetadata.js             站点基础信息
 
-Using the template? Feel free to create a PR and add your blog to this list.
+layouts/
+  PostLayout.tsx              三栏文章布局
+  ListLayout.tsx              普通博客列表布局
 
-## Examples V1
+public/static/
+  images/                     头像、logo、分享图等静态资源
+  nav-icons/                  导航门户卡片图标
 
-[v1-blogs-showcase.webm](https://github.com/timlrx/tailwind-nextjs-starter-blog/assets/28362229/2124c81f-b99d-4431-839c-347e01a2616c)
+contentlayer.config.ts
+  内容 schema、目录提取、MDX 解析配置
 
-Thanks to the community of users and contributors to the template! We are no longer accepting new blog listings over here. If you have updated from version 1 to version 2, feel free to remove your blog from this list and add it to the one above.
-
-- [Aloisdg's cookbook](https://tambouille.vercel.app/) - with pictures and recipes!
-- [GautierArcin's demo with next translate](https://tailwind-nextjs-starter-blog-seven.vercel.app/) - includes translation of mdx posts, [source code](https://github.com/GautierArcin/tailwind-nextjs-starter-blog/tree/demo/next-translate)
-- [David Levai's digital garden](https://davidlevai.com/) - customized design and added email subscriptions
-- [thvu.dev](https://thvu.dev) - Added `mdx-embed`, view count, reading minutes and more.
-- [irvin.dev](https://www.irvin.dev/) - Irvin Lin's personal site. Added YouTube embedding.
-- [KirillSo.com](https://www.kirillso.com/) - Personal blog & website.
-- [slightlysharpe.com](https://slightlysharpe.com) - [Tincre's](https://tincre.com) main company blog
-- [blog.b00st.com](https://blog.b00st.com) - [b00st.com's](https://b00st.com) main music promotion blog
-- [astrosaurus.me](https://astrosaurus.me/) - Ephraim Atta-Duncan's Personal Blog
-- [dhanrajsp.me](https://dhanrajsp.me/) - Dhanraj's personal site and blog.
-- [blog.r00ks.io](https://blog.r00ks.io/) - Austin Rooks's personal blog ([source code](https://github.com/Austionian/blog.r00ks)).
-- [honghong.me](https://honghong.me) - Tszhong's personal website ([source code](https://github.com/tszhong0411/home))
-- [marceloformentao.dev](https://marceloformentao.dev) - Marcelo Formentão personal website ([source code](https://github.com/marceloavf/marceloformentao.dev)).
-- [abiraja.com](https://www.abiraja.com/) - with a [runnable JS code snippet component!](https://www.abiraja.com/blog/querying-solana-blockchain)
-- [bpiggin.com](https://www.bpiggin.com) - Ben Piggin's personal blog
-- [maqib.cn](https://maqib.cn) - A blog of Chinese front-end developers 狂奔小马的博客 ([源码](https://github.com/maqi1520/nextjs-tailwind-blog))
-- [ambilena.com](https://ambilena.com/) - Electronic Music Blog & imprint for upcoming musicians.
-- [techipedia](https://techipedia.vercel.app) - Simple blogging progressive web app with custom installation button and top progress bar
-- [reubence.com](https://reubence.com) - Reuben Rapose's Digital Garden
-- [axolo.co/blog](https://axolo.co/blog) - Engineering management news & axolo.co updates (with image preview for article in the home page)
-- [musing.vercel.app](https://musing.vercel.app/) - Parth Desai's personal blog ([source code](https://github.com/pycoder2000/blog))
-- [onyourmental.com](https://www.onyourmental.com/) - [Curtis Warcup's](https://github.com/Cwarcup) website for the On Your Mental Podcast ([source code](https://github.com/Cwarcup/on-your-mental))
-- [cwarcup.com](https://www.cwarcup.com/) - Curtis Warcup's personal website and blog ([source code](https://github.com/Cwarcup/personal-blog)).
-- [jmalvarez.dev](https://www.jmalvarez.dev/) - José Miguel Álvarez's personal blog ([source code](https://github.com/josemiguel-alvarez/nextjs-blog))
-- [justingosses.com](https://justingosses.com/) - Justin Gosses's personal website and blog ([source code](https://github.com/JustinGOSSES/justingosses-website))
-- [raphaelchelly.com](https://www.raphaelchelly.com/) - Raphaël Chelly's personal website and blog ([source code](https://github.com/raphaelchelly/raph_www))
-- [kaveh.page](https://kaveh.page) - Kaveh Tehrani's personal blog. Added tags directory, profile card, time-to-read on posts directory, etc.
-- [drakerossman.com](https://drakerossman.com/) - Drake Rossman's blog about NixOS, Rust, Software Architecture and Engineering Management, as well as general musings.
-- [meamenu.com](https://www.meamenu.com) - Landing page and product blog starting from this template. It also uses [framer-motion](https://www.framer.com/motion) for animations, custom layout templates, [waline](https://waline.js.org/en/) for blog comments and [primereact](https://primereact.org/) forms [Ita]
-- [giovanni.orciuolo.it](https://giovanni.orciuolo.it) - Giovanni Orciuolo's personal website, blog and everything nerd.
-
-## Motivation
-
-I wanted to port my existing blog to Nextjs and Tailwind CSS but there was no easy out of the box template to use so I decided to create one. Design is adapted from [Tailwindlabs blog](https://github.com/tailwindlabs/blog.tailwindcss.com).
-
-I wanted it to be nearly as feature-rich as popular blogging templates like [beautiful-jekyll](https://github.com/daattali/beautiful-jekyll) and [Hugo Academic](https://github.com/wowchemy/wowchemy-hugo-modules) but with the best of React's ecosystem and current web development's best practices.
-
-## Features
-
-- Next.js with Typescript
-- [Contentlayer](https://www.contentlayer.dev/) to manage content logic
-- Easy styling customization with [Tailwind 3.0](https://tailwindcss.com/blog/tailwindcss-v3) and primary color attribute
-- [MDX - write JSX in markdown documents!](https://mdxjs.com/)
-- Near perfect lighthouse score - [Lighthouse report](https://www.webpagetest.org/result/230805_BiDcBQ_4H7)
-- Lightweight, 85kB first load JS
-- Mobile-friendly view
-- Light and dark theme
-- Font optimization with [next/font](https://nextjs.org/docs/app/api-reference/components/font)
-- Integration with [pliny](https://github.com/timlrx/pliny) that provides:
-  - Multiple analytics options including [Umami](https://umami.is/), [Plausible](https://plausible.io/), [Simple Analytics](https://simpleanalytics.com/), Posthog and Google Analytics
-  - Comments via [Giscus](https://github.com/laymonage/giscus), [Utterances](https://github.com/utterance/utterances) or Disqus
-  - Newsletter API and component with support for Mailchimp, Buttondown, Convertkit, Klaviyo, Revue, Emailoctopus and Beehiiv
-  - Command palette search with [Kbar](https://github.com/timc1/kbar) or Algolia
-- Server-side syntax highlighting with line numbers and line highlighting via [rehype-prism-plus](https://github.com/timlrx/rehype-prism-plus)
-- Math display supported via [KaTeX](https://katex.org/)
-- Citation and bibliography support via [rehype-citation](https://github.com/timlrx/rehype-citation)
-- [Github alerts](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts) via [remark-github-blockquote-alert](https://github.com/jaywcjlove/remark-github-blockquote-alert)
-- Automatic image optimization via [next/image](https://nextjs.org/docs/basic-features/image-optimization)
-- Support for tags - each unique tag will be its own page
-- Support for multiple authors
-- 3 different blog layouts
-- 2 different blog listing layouts
-- Support for nested routing of blog posts
-- Projects page
-- Preconfigured security headers
-- SEO friendly with RSS feed, sitemaps and more!
-
-## Sample posts
-
-- [A markdown guide](https://tailwind-nextjs-starter-blog.vercel.app/blog/github-markdown-guide)
-- [Learn more about images in Next.js](https://tailwind-nextjs-starter-blog.vercel.app/blog/guide-to-using-images-in-nextjs)
-- [A tour of math typesetting](https://tailwind-nextjs-starter-blog.vercel.app/blog/deriving-ols-estimator)
-- [Simple MDX image grid](https://tailwind-nextjs-starter-blog.vercel.app/blog/pictures-of-canada)
-- [Example of long prose](https://tailwind-nextjs-starter-blog.vercel.app/blog/the-time-machine)
-- [Example of Nested Route Post](https://tailwind-nextjs-starter-blog.vercel.app/blog/nested-route/introducing-multi-part-posts-with-nested-routing)
-
-## Quick Start Guide
-
-1. Clone the repo
-
-```bash
-npx degit 'timlrx/tailwind-nextjs-starter-blog'
+next.config.js
+  Next.js 配置和 CSP 安全头
 ```
 
-2. Personalize `siteMetadata.js` (site related information)
-3. Modify the content security policy in `next.config.js` if you want to use
-   other analytics provider or a commenting solution other than giscus.
-4. Personalize `authors/default.md` (main author)
-5. Modify `projectsData.ts`
-6. Modify `headerNavLinks.ts` to customize navigation links
-7. Add blog posts
-8. Deploy on Vercel
+## 4. 环境要求
 
-## Installation
+建议环境：
+
+- Node.js 20 或更高
+- Yarn 3
+- Windows PowerShell、Git Bash 或 macOS Terminal
+
+先检查版本：
+
+```bash
+node -v
+yarn -v
+```
+
+## 5. 安装依赖
+
+在项目根目录运行：
 
 ```bash
 yarn
 ```
 
-Please note, that if you are using Windows, you may need to run:
+作用：安装开发和构建所需依赖。
 
-```bash
-$env:PWD = $(Get-Location).Path
-```
+## 6. 本地开发与构建
 
-## Development
-
-First, run the development server:
+启动开发环境：
 
 ```bash
 yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+默认访问：
 
-Edit the layout in `app` or content in `data`. With live reloading, the pages auto-updates as you edit them.
-
-## Extend / Customize
-
-`data/siteMetadata.js` - contains most of the site related information which should be modified for a user's need.
-
-`data/authors/default.md` - default author information (required). Additional authors can be added as files in `data/authors`.
-
-`data/projectsData.js` - data used to generate styled card on the projects page.
-
-`data/headerNavLinks.js` - navigation links.
-
-`data/logo.svg` - replace with your own logo.
-
-`data/blog` - replace with your own blog posts.
-
-`public/static` - store assets such as images and favicons.
-
-`tailwind.config.js` and `css/tailwind.css` - tailwind configuration and stylesheet which can be modified to change the overall look and feel of the site.
-
-`css/prism.css` - controls the styles associated with the code blocks. Feel free to customize it and use your preferred prismjs theme e.g. [prism themes](https://github.com/PrismJS/prism-themes).
-
-`contentlayer.config.ts` - configuration for Contentlayer, including definition of content sources and MDX plugins used. See [Contentlayer documentation](https://www.contentlayer.dev/docs/getting-started) for more information.
-
-`components/MDXComponents.js` - pass your own JSX code or React component by specifying it over here. You can then use them directly in the `.mdx` or `.md` file. By default, a custom link, `next/image` component, table of contents component and Newsletter form are passed down. Note that the components should be default exported to avoid [existing issues with Next.js](https://github.com/vercel/next.js/issues/51593).
-
-`layouts` - main templates used in pages:
-
-- There are currently 3 post layouts available: `PostLayout`, `PostSimple` and `PostBanner`. `PostLayout` is the default 2 column layout with meta and author information. `PostSimple` is a simplified version of `PostLayout`, while `PostBanner` features a banner image.
-- There are 2 blog listing layouts: `ListLayout`, the layout used in version 1 of the template with a search bar and `ListLayoutWithTags`, currently used in version 2, which omits the search bar but includes a sidebar with information on the tags.
-
-`app` - pages to route to. Read the [Next.js documentation](https://nextjs.org/docs/app) for more information.
-
-`next.config.js` - configuration related to Next.js. You need to adapt the Content Security Policy if you want to load scripts, images etc. from other domains.
-
-## Post
-
-Content is modelled using [Contentlayer](https://www.contentlayer.dev/), which allows you to define your own content schema and use it to generate typed content objects. See [Contentlayer documentation](https://www.contentlayer.dev/docs/getting-started) for more information.
-
-### Frontmatter
-
-Frontmatter follows [Hugo's standards](https://gohugo.io/content-management/front-matter/).
-
-Please refer to `contentlayer.config.ts` for an up to date list of supported fields. The following fields are supported:
-
-```
-title (required)
-date (required)
-tags (optional)
-lastmod (optional)
-draft (optional)
-summary (optional)
-images (optional)
-authors (optional list which should correspond to the file names in `data/authors`. Uses `default` if none is specified)
-layout (optional list which should correspond to the file names in `data/layouts`)
-canonicalUrl (optional, canonical url for the post for SEO)
+```text
+http://localhost:3000
 ```
 
-Here's an example of a post's frontmatter:
+生产构建：
 
+```bash
+yarn build
 ```
+
+本地预览生产构建：
+
+```bash
+yarn serve
+```
+
+分析打包体积：
+
+```bash
+yarn analyze
+```
+
+## 7. 内容类型说明
+
+当前站点有两套内容源：
+
+### 7.1 普通博客文章
+
+目录：
+
+- `data/blog/*.mdx`
+
+展示位置：
+
+- 首页最新文章
+- `/blog`
+- `/blog/[slug]`
+- 顶栏搜索结果中的 `Blog` 分组
+
+### 7.2 网安笔记
+
+目录：
+
+- `data/security/*.mdx`
+
+展示位置：
+
+- `/security`
+- `/security/[slug]`
+- 顶栏搜索结果中的 `Security` 分组
+
+不会展示到：
+
+- 首页最新文章
+- `/blog`
+
+## 8. 如何新增普通博客文章
+
+### 8.1 文件位置
+
+把新文章放进：
+
+- `data/blog/`
+
+建议文件名使用 ASCII slug，例如：
+
+```text
+fastapi-study-notes.mdx
+```
+
+标题可以写中文，但文件名尽量不要直接使用中文，避免 URL 编码问题。
+
+### 8.2 Frontmatter 示例
+
+```md
 ---
-title: 'Introducing Tailwind Nexjs Starter Blog'
-date: '2021-01-12'
-lastmod: '2021-01-18'
-tags: ['next-js', 'tailwind', 'guide']
-draft: false
-summary: 'Looking for a performant, out of the box template, with all the best in web technology to support your blogging needs? Checkout the Tailwind Nextjs Starter Blog template.'
-images: ['/static/images/canada/mountains.jpg', '/static/images/canada/toronto.jpg']
-authors: ['default', 'sparrowhawk']
+title: 'FastAPI 学习笔记：从概念到最小可运行项目'
+date: '2026-03-09'
+tags: ['后端', 'Python', 'FastAPI']
+summary: '从 FastAPI 的定位、配套工具、最小示例和分层结构开始，整理一篇适合反复回看的中文入门笔记。'
+authors:
+  - 'default'
 layout: PostLayout
-canonicalUrl: https://tailwind-nextjs-starter-blog.vercel.app/blog/introducing-tailwind-nextjs-starter-blog
 ---
 ```
 
-## Deploy
+常用字段：
 
-### GitHub Pages
+- `title`：标题，必填
+- `date`：日期，必填
+- `summary`：摘要，建议填写
+- `authors`：通常写 `default`
+- `layout`：当前建议使用 `PostLayout`
+- `tags`：可以保留作元数据，但当前站点不再展示标签 UI
 
-A [`pages.yml`](.github/workflows/pages.yml) workflow is already provided. Simply select "GitHub Actions" in: `Settings > Pages > Build and deployment > Source`.
+## 9. 如何新增网安笔记
 
-### Vercel
+把新笔记放进：
 
-The easiest way to deploy the template is to deploy on [Vercel](https://vercel.com). Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `data/security/`
 
-### Netlify
+建议文件名示例：
 
-[Netlify](https://www.netlify.com/)’s Next.js runtime configures enables key Next.js functionality on your website without the need for additional configurations. Netlify generates serverless functions that will handle Next.js functionalities such as server-side rendered (SSR) pages, incremental static regeneration (ISR), `next/images`, etc.
-
-See [Next.js on Netlify](https://docs.netlify.com/integrations/frameworks/next-js/overview/#next-js-runtime) for suggested configuration values and more details.
-
-### Static hosting services (GitHub Pages / S3 / Firebase etc.)
-
-Run:
-
-```sh
-$ EXPORT=1 UNOPTIMIZED=1 yarn build
+```text
+owasp-top-10-notes.mdx
 ```
 
-Then, deploy the generated `out` folder or run `npx serve out` it locally.
+推荐 frontmatter：
 
-> [!IMPORTANT]
-> If deploying with a URL base path, like https://example.org/myblog you need an extra `BASE_PATH` shell-var to the build command:
->
-> ```sh
-> $ EXPORT=1 UNOPTIMIZED=1 BASE_PATH=/myblog yarn build
-> ```
->
-> => In your code, `${process.env.BASE_PATH || ''}/robots.txt` will print `"/myblog/robots.txt"` in the `out` build (or only `/robots.txt` if `yarn dev`, ie: on localhost:3000)
+```md
+---
+title: 'OWASP Top 10 学习笔记'
+date: '2026-03-17'
+summary: '整理 OWASP Top 10 的风险分类、常见案例和后续实战复习重点。'
+authors:
+  - 'default'
+layout: PostLayout
+---
+```
 
-> [!TIP]
-> Alternatively to `UNOPTIMIZED=1`, to continue using `next/image`, you can use an alternative image optimization provider such as Imgix, Cloudinary or Akamai. See [image optimization documentation](https://nextjs.org/docs/app/building-your-application/deploying/static-exports#image-optimization) for more details.
+注意：
 
-Consider removing the following features that cannot be used in a static build:
+- Security 笔记和普通博客文章是两套独立内容类型
+- 只要放进 `data/security/`，它就不会混进 `/blog`
+- 从外部 Markdown 导入时，记得先清理本地磁盘图片路径和敏感信息
 
-1. Comment out `headers()` from `next.config.js`.
-2. Remove `api` folder and components which call the server-side function such as the Newsletter component. Not technically required and the site will build successfully, but the APIs cannot be used as they are server-side functions.
+当前仓库已导入的 6 篇网安笔记在：
 
-## Frequently Asked Questions
+- `data/security/buuctf-notes.mdx`
+- `data/security/owasp-top-10.mdx`
+- `data/security/pikachu-lab-notes.mdx`
+- `data/security/sqli-labs-notes.mdx`
+- `data/security/vulnhub-notes.mdx`
+- `data/security/recommended-labs.mdx`
 
-- [How can I add a custom MDX component?](/faq/custom-mdx-component.md)
-- [How can I customize the `kbar` search?](/faq/customize-kbar-search.md)
-- [Deploy with docker](/faq/deploy-with-docker.md)
+## 10. 文章目录如何工作
 
-## Support
+当前文章目录已经内置，不需要手写。
 
-Using the template? Support this effort by giving a star on GitHub, sharing your own blog and giving a shoutout on Twitter or becoming a project [sponsor](https://github.com/sponsors/timlrx).
+工作方式：
 
-## Licence
+- Contentlayer 构建 MDX 时自动提取标题，生成 `post.toc`
+- 文章布局复用 `pliny/ui/TOCInline`
+- 桌面端显示在正文右侧吸顶区域
+- 手机端显示为折叠面板
 
-[MIT](https://github.com/timlrx/tailwind-nextjs-starter-blog/blob/main/LICENSE) © [Timothy Lin](https://www.timlrx.com)
+目录默认收录：
+
+- `##` 二级标题
+- `###` 三级标题
+
+如果文章里只有 1 个可用标题，目录会自动隐藏。
+
+## 11. 如何修改站点信息
+
+### 11.1 修改站点标题、描述、域名
+
+编辑：
+
+- `data/siteMetadata.js`
+
+常用字段：
+
+- `title`：站点完整名称
+- `author`：站点作者名
+- `headerTitle`：顶栏左侧标题
+- `description`：首页和 SEO 描述
+- `siteUrl`：正式站点域名
+- `siteRepo`：仓库地址
+- `github`：GitHub 主页
+- `language` / `locale`：当前保持 `zh-CN`
+
+### 11.2 修改作者资料和头像
+
+编辑：
+
+- `data/authors/default.mdx`
+
+当前默认头像文件：
+
+- `public/static/images/avatar-wechat.png`
+
+如果以后要更换头像，建议继续使用英文文件名，例如：
+
+```text
+public/static/images/avatar-new.png
+```
+
+然后同步修改：
+
+- `data/authors/default.mdx`
+
+### 11.3 修改顶部导航
+
+编辑：
+
+- `data/headerNavLinks.ts`
+
+当前导航为：
+
+- `Home`
+- `Blog`
+- `Nav`
+- `Projects`
+- `Security`
+
+## 12. 如何维护导航门户页
+
+导航门户的数据统一维护在：
+
+- `data/portalData.ts`
+
+这个文件里包含：
+
+- 分类数据
+- 网站卡片数据
+- 图标路径
+
+当前门户页只保留：
+
+- 左侧分类栏
+- 右侧网站卡片区
+
+已经移除：
+
+- 页面顶部大横幅
+- `MyBlog / GitHub` 快捷按钮
+- 页面内搜索框
+
+站内搜索已经转移到全站 Header。
+
+新增门户卡片时，通常只需要在 `portalLinks` 里增加一个对象，例如：
+
+```ts
+{
+  id: 'ai-chatgpt',
+  title: 'ChatGPT',
+  url: 'https://chatgpt.com/',
+  description: '通用 AI 助手入口，适合写作、问答和代码辅助。',
+  categoryId: 'ai',
+  iconPath: '/static/nav-icons/chatgpt.png',
+  keywords: ['OpenAI', 'ChatGPT', 'AI 助手']
+}
+```
+
+图标建议放在：
+
+- `public/static/nav-icons/`
+
+## 13. 如何修改项目页
+
+编辑：
+
+- `data/projectsData.ts`
+
+这里控制 `/projects` 页面卡片内容。可以放：
+
+- 你自己的项目
+- 学习专题
+- 占位中的建设计划
+
+## 14. 顶栏搜索说明
+
+当前搜索入口在：
+
+- 桌面端 Header 中间
+- 手机端抽屉菜单顶部
+
+搜索结果页路径：
+
+```text
+/search?q=关键词
+```
+
+搜索范围固定包含：
+
+- `title`
+- `summary`
+- `body.raw`
+
+搜索结果会分成两组：
+
+- `Blog`
+- `Security`
+
+## 15. 首页访问统计说明
+
+首页访问统计使用：
+
+- `Busuanzi`
+
+相关组件：
+
+- `components/HomeSiteStats.tsx`
+
+如果以后需要关闭统计，可以移除：
+
+- `app/Main.tsx` 里的 `HomeSiteStats`
+- `next.config.js` 里的 Busuanzi CSP 域名
+
+## 16. 当前已关闭或移除的功能
+
+为保持首版简洁稳定，目前这些功能已关闭或下线：
+
+- `Tags` 页面：已移除
+- 标签路由：已移除
+- 首页标签芯片：已移除
+- 博客列表标签侧栏：已移除
+- 文章详情页标签展示：已移除
+- 评论：已关闭
+- 订阅：已关闭
+
+说明：
+
+- 现在站内搜索已重新启用，但它是全站顶栏搜索，不再是旧模板那套标签或本地搜索页逻辑
+
+## 17. 部署建议
+
+### 17.1 推荐：Vercel
+
+这个项目目前最适合直接部署到 Vercel。
+
+基本流程：
+
+1. 把仓库推到 GitHub
+2. 在 Vercel 导入该仓库
+3. 使用默认 Next.js 配置部署
+4. 部署成功后，把 `data/siteMetadata.js` 中的 `siteUrl` 改为正式域名
+
+推荐 Vercel 的原因：
+
+- 对 Next.js 支持最好
+- `/search?q=...` 这类查询页开箱即用
+- 不需要你额外处理 Node 服务和路由问题
+
+### 17.2 静态导出
+
+项目仍然保留静态导出能力，但当前版本更推荐作为补充方案。
+
+PowerShell 示例：
+
+```powershell
+$env:EXPORT='1'
+$env:UNOPTIMIZED='1'
+yarn build
+```
+
+如果你还有二级路径，例如 `/my-blog`：
+
+```powershell
+$env:EXPORT='1'
+$env:UNOPTIMIZED='1'
+$env:BASE_PATH='/my-blog'
+yarn build
+```
+
+提示：
+
+- 静态导出更适合纯内容浏览
+- 如果你希望顶栏搜索的体验完整，优先使用 Vercel 或其他 Node 运行环境
+
+## 18. 常见问题
+
+### 18.1 `yarn dev` 报错 `Unbound variable "PWD"`
+
+这个问题已经处理过。当前 `package.json` 中的开发脚本可直接在 Windows PowerShell 中运行：
+
+```bash
+yarn dev
+```
+
+### 18.2 中文内容出现乱码怎么办
+
+建议统一使用 UTF-8 编码保存文件，尤其是：
+
+- `data/blog/*.mdx`
+- `data/security/*.mdx`
+- `data/authors/*.mdx`
+
+在 PowerShell 里查看中文文件时，也尽量显式指定 UTF-8。
+
+### 18.3 外部 Markdown 导入后为什么图片不显示
+
+最常见原因是原文使用了本地绝对路径，例如：
+
+```text
+C:\Users\...\Typora\...
+```
+
+这类路径无法部署到网站上。导入时应：
+
+1. 删除这类本地路径图片引用
+2. 或把图片复制到 `public/static/images/` 后改成站内相对路径
+
+### 18.4 为什么 Security 笔记没有出现在首页
+
+因为这是刻意分流的设计。
+
+- `data/blog/` 里的内容进入首页和 `/blog`
+- `data/security/` 里的内容只进入 `/security`
+
+### 18.5 导航门户页为什么没有搜索框了
+
+因为搜索已经迁移到全站顶栏。
+
+现在：
+
+- `/nav` 只负责站点卡片分类浏览
+- 站内内容搜索统一走 Header 的 `/search`
+
+## 19. 当前最常修改的文件
+
+- `data/siteMetadata.js`
+- `data/authors/default.mdx`
+- `data/blog/*.mdx`
+- `data/security/*.mdx`
+- `data/portalData.ts`
+- `data/projectsData.ts`
+- `data/headerNavLinks.ts`
+- `public/static/images/*`
+- `public/static/nav-icons/*`
+
+## 20. 维护建议
+
+如果你后面继续把这个博客做成正式站点，建议按这个顺序维护：
+
+1. 先补齐 `siteMetadata.js` 里的真实域名、仓库地址和社交链接
+2. 持续把公开内容分别放进 `data/blog/` 和 `data/security/`
+3. 每次发文前补齐 `title`、`date`、`summary`
+4. 新增常用站点时只改 `data/portalData.ts`
+5. 上线前固定执行一次 `yarn build`
+
+这份 README 已按当前仓库的实际状态编写。如果后面你继续加评论、订阅、更多内容分区或部署脚本，也建议同步更新这里，避免文档和站点状态脱节。

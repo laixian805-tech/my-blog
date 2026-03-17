@@ -1,0 +1,68 @@
+﻿---
+title: '推荐靶场整理'
+date: '2026-03-07'
+summary: '汇总适合继续练手的 VulnHub 与 Web 安全靶场，按难度和练习目标做简要整理。'
+authors:
+  - 'default'
+layout: PostLayout
+---
+
+### **1.** **\*\*EvilBox-One\*\***
+
+- **难度**：中等
+
+- **特点**：需要取得root权限并拿到两个flag，涉及多种渗透技术
+
+- 关键技能点
+
+  ：
+  - 主机发现与网络扫描
+  - 强制访问与参数爆破
+  - 文件包含与PHP封装器
+  - 任意文件读取
+  - SSH公钥登录
+  - 离线密码破解
+  - 系统权限漏洞利用
+
+- **获取方式**：https://download.vulnhub.com/evilbox/EvilBox—One.ova
+
+- **推荐理由**：与您已打过的靶场难度相当，但涉及的技术点更全面，能帮助您巩固和拓展渗透测试技能，特别是对Web漏洞和系统提权的深入理解。
+
+### **2.** **\*\*CH4INRULZ\*\***
+
+- **难度**：中等
+
+- **特点**：经典Vulnhub靶场，以"图片马"和"脏牛提权"为特色
+
+- 关键技能点
+
+  ：
+  - 图片马制作与利用
+  - PHP反向Shell
+  - 脏牛(CVE-2016-5195)提权
+  - 基础漏洞利用
+
+- **获取方式**：https://download.vulnhub.com/ch4inrulz/CH4INRULZ_v1.0.1.ova
+
+- **推荐理由**：这个靶场是Vulnhub上非常经典的中等难度靶场，特别适合练习文件上传漏洞利用和Linux提权技巧。您已经掌握了基础的渗透技能，这个靶场能帮助您深入理解漏洞利用的细节。
+
+这两个靶场都是Vulnhub上的热门靶场，难度适中，技术点丰富，非常适合您当前的水平。它们能帮助您进一步巩固Web渗透、系统提权和内网渗透技能，为更高级的渗透测试打下坚实基础。
+
+如果您想专注于Web安全，也可以考虑尝试**Mutillidae**（https://sourceforge.net/projects/mutillidae
+
+），它包含丰富的Web漏洞测试项目，如SQL注入、跨站脚本、Clickjacking等，
+
+#### **\*\*Stapler\*\*\*\***（强烈推荐枚举能力训练）\*\*
+
+- **官方下载链接**（Vulnhub最新版）：
+  🔗 [https://www.vulnhub.com/entry/stapler-1,499/](https://www.vulnhub.com/entry/stapler-1,499/?spm=5176.28103460.0.0.96a07551OGIrRW)
+  _（点击页面右下角 "Download" 按钮获取 OVA 文件）_
+- **为什么有效**：
+  Vulnhub 官网链接永久有效，无需百度网盘。靶场描述明确标注 **"Multiple paths to root"**（多路径提权），完全符合您描述的"大海捞针"式枚举训练。
+
+---
+
+#### **2.** **\*\*Zico2\*\*\*\***（LFI 与提权经典靶场）\*\*
+
+- **官方下载链接**（Vulnhub 2023年更新版）：
+  🔗 [https://www.vulnhub.com/entry/zico2-1,561/](https://www.vulnhub.com/entry/zico2-1,561/?spm=5176.28103460.0.0.96a07551OGIrRW)

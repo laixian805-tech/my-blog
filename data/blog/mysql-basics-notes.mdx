@@ -1,0 +1,112 @@
+---
+title: 'MySQL 学习笔记：先把常用查询语句跑通'
+date: '2026-03-14'
+tags: ['数据库', 'MySQL', 'SQL']
+draft: false
+summary: '先从进入 MySQL、基础查询语句和 where / group by / having 的区别入手，把最常用的 SQL 读懂。'
+authors: ['default']
+layout: PostLayout
+---
+
+这篇笔记的重点不是“把数据库一次学完”，而是先把最常用的 SQL 查询语句看懂、跑通。
+
+## 先把环境入口记住
+
+我给自己记的第一条不是复杂命令，而是：**先确认 MySQL 服务已经启动，再进入命令行。**
+
+如果本地环境已经配置好，进入 MySQL 的常见方式是：
+
+```bash
+mysql -uroot -p
+```
+
+输入密码后，就能开始执行 SQL 语句。
+
+## 先掌握最常用的一组查询
+
+对入门阶段来说，先把查询跑通，比一开始就钻进复杂函数更重要。下面这组语句是我最先反复看的：
+
+```sql
+SELECT * FROM users;
+
+SELECT username, email FROM users;
+
+SELECT * FROM users WHERE is_active = TRUE;
+
+SELECT * FROM users ORDER BY birthdate ASC;
+
+SELECT * FROM users ORDER BY birthdate DESC;
+
+SELECT * FROM users LIMIT 10;
+```
+
+它们分别对应几种最基础的能力：
+
+- 查所有列
+- 查指定列
+- 带条件查询
+- 升序排序
+- 降序排序
+- 限制返回条数
+
+## `WHERE` 到底在做什么
+
+`WHERE` 的核心作用就是 **筛选数据**。
+
+比如：
+
+```sql
+SELECT * FROM users WHERE username = 'test';
+```
+
+这条语句表达的是：先从 `users` 表里找数据，再只保留用户名等于 `test` 的那部分记录。
+
+我更喜欢把 `WHERE` 理解成“先加一个筛子”，让数据库不要把无关数据全拿出来。
+
+## `GROUP BY` 和 `HAVING` 怎么区分
+
+这两个词很容易一起记混，但它们处理的阶段不同：
+
+- `GROUP BY`：先分组
+- `HAVING`：再对分组后的结果继续筛选
+
+所以我现在给自己的最短记忆方式是：
+
+- `WHERE` 过滤原始数据
+- `GROUP BY` 负责分组
+- `HAVING` 过滤分组结果
+
+## 一次查询的大致执行顺序
+
+我觉得这一点特别值得单独记下来，因为很多语句写不对，根本原因是顺序没想清楚。
+
+```text
+1. FROM（包括 JOIN）
+2. WHERE
+3. GROUP BY
+4. HAVING
+5. WINDOW functions
+6. SELECT
+7. DISTINCT
+8. UNION
+9. ORDER BY
+10. LIMIT / OFFSET
+```
+
+至少在当前阶段，我希望自己先能凭这个顺序解释清楚：
+
+- 为什么有些字段能在 `WHERE` 用，有些不行
+- 为什么分组之后再过滤要写 `HAVING`
+- 为什么排序和限制条数总是在靠后的位置
+
+## 这一阶段最值得先会的内容
+
+如果只是为了把数据库基础打稳，我会先优先掌握：
+
+1. 能进入 MySQL 并执行基本查询
+2. 会写 `SELECT`
+3. 会用 `WHERE` 做条件筛选
+4. 会用 `ORDER BY` 排序
+5. 知道 `GROUP BY` 和 `HAVING` 的差别
+
+先把这些最常用的语句反复跑熟，后面再去扩展多表查询、索引和事务，会轻松很多。
