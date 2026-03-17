@@ -17,7 +17,6 @@ const siteMetadata = {
   x: '',
   linkedin: '',
   locale: 'zh-CN',
-  // set to true if you want a navbar fixed to the top
   stickyNav: false,
   analytics: {},
 }

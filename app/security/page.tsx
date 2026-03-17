@@ -1,9 +1,9 @@
 import { allSecurityNotes } from 'contentlayer/generated'
 import { allCoreContent, sortPosts } from 'pliny/utils/contentlayer'
 import { formatDate } from 'pliny/utils/formatDate'
+import { genPageMetadata } from 'app/seo'
 import Link from '@/components/Link'
 import siteMetadata from '@/data/siteMetadata'
-import { genPageMetadata } from 'app/seo'
 
 export const metadata = genPageMetadata({
   title: 'Security',

@@ -20,21 +20,21 @@ export default function HomeProfileHero({
 }: HomeProfileHeroProps) {
   return (
     <div className={`pt-6 pb-10 ${className}`}>
-      <div className="grid gap-8 rounded-[32px] border border-slate-200 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(241,245,249,0.9))] p-6 shadow-[0_25px_70px_-50px_rgba(15,23,42,0.55)] sm:p-8 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] lg:items-center dark:border-gray-800 dark:bg-[linear-gradient(135deg,rgba(3,7,18,0.98),rgba(15,23,42,0.92))]">
+      <div className="grid gap-8 rounded-[36px] border border-slate-200 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(241,245,249,0.92))] p-6 shadow-[0_30px_80px_-48px_rgba(15,23,42,0.65)] sm:p-8 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] lg:items-center dark:border-gray-800 dark:bg-[linear-gradient(135deg,rgba(3,7,18,0.98),rgba(15,23,42,0.94))]">
         <div className="flex flex-col items-center gap-5">
-          <div className="relative h-52 w-52 overflow-hidden rounded-full sm:h-64 sm:w-64 md:h-72 md:w-72 lg:h-80 lg:w-80">
+          <div className="relative h-56 w-56 overflow-hidden rounded-full border border-slate-200 bg-white shadow-[0_28px_60px_-32px_rgba(15,23,42,0.85)] sm:h-64 sm:w-64 md:h-72 md:w-72 lg:h-80 lg:w-80 dark:border-gray-800 dark:bg-gray-950">
             <Image
               src={siteMetadata.homeProfileAvatar}
               alt="首页头像"
               fill
-              sizes="(min-width: 1024px) 320px, (min-width: 768px) 288px, 220px"
+              sizes="(min-width: 1024px) 320px, (min-width: 768px) 288px, 224px"
               className="object-cover"
               priority
             />
           </div>
           <Link
             href={siteMetadata.homeProfileGithub}
-            className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-600 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-sky-300"
+            className="inline-flex min-w-32 items-center justify-center rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-600 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-sky-300"
           >
             GitHub
           </Link>
@@ -42,7 +42,7 @@ export default function HomeProfileHero({
 
         <div className="space-y-6">
           <div className="space-y-3">
-            <p className="text-xs font-semibold tracking-[0.3em] text-sky-600 uppercase dark:text-sky-300">
+            <p className="text-xs font-semibold tracking-[0.32em] text-sky-600 uppercase dark:text-sky-300">
               Dashboard
             </p>
             <h1 className="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl dark:text-white">
@@ -53,11 +53,19 @@ export default function HomeProfileHero({
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-white/70 p-5 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-950/65">
-            <div className="mb-4">
-              <p className="text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase dark:text-slate-500">
-                Blog Stats
-              </p>
+          <div className="rounded-[30px] border border-slate-200/80 bg-white/70 p-5 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.65)] backdrop-blur dark:border-gray-800 dark:bg-gray-950/60">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase dark:text-slate-500">
+                  Blog Stats
+                </p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  访问趋势与来源详情请在 Vercel Analytics 后台查看。
+                </p>
+              </div>
+              <div className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300">
+                Stable
+              </div>
             </div>
             <HomeSiteStats
               totalPosts={totalPosts}
@@ -65,9 +73,6 @@ export default function HomeProfileHero({
               securityPostCount={securityPostCount}
               siteStartDate={SITE_START_DATE}
             />
-            <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-              访问数据已迁移到 Vercel Analytics 仪表盘查看。
-            </p>
           </div>
         </div>
       </div>
