@@ -17,6 +17,14 @@ export const metadata = genPageMetadata({
   description: '搜索站内博客文章与网安笔记。',
 })
 
+function buildSearchExcerpt(raw: string) {
+  return raw
+    .replace(/\s+/g, ' ')
+    .replace(/[`*_>#-]/g, ' ')
+    .slice(0, 1200)
+    .toLowerCase()
+}
+
 function buildSearchIndex(
   items: Array<{
     title: string
@@ -31,7 +39,8 @@ function buildSearchIndex(
     summary: item.summary,
     date: item.date,
     path: item.path,
-    searchText: `${item.title} ${item.summary || ''} ${item.body.raw}`.toLowerCase(),
+    searchText:
+      `${item.title} ${item.summary || ''} ${buildSearchExcerpt(item.body.raw)}`.toLowerCase(),
   }))
 }
 

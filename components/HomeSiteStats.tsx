@@ -119,15 +119,15 @@ export default function HomeSiteStats({
               </span>
             </div>
             <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 dark:bg-gray-900/80">
-              <span className="text-sm text-slate-500 dark:text-slate-400">访问统计</span>
+              <span className="text-sm text-slate-500 dark:text-slate-400">首页统计</span>
               <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                Analytics
+                站内概览
               </span>
             </div>
             <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 dark:bg-gray-900/80">
-              <span className="text-sm text-slate-500 dark:text-slate-400">更新时间</span>
+              <span className="text-sm text-slate-500 dark:text-slate-400">访客趋势</span>
               <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                实时构建
+                暂未公开
               </span>
             </div>
           </div>

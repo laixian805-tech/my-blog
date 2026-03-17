@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useDeferredValue, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { formatDate } from 'pliny/utils/formatDate'
 import Link from '@/components/Link'
@@ -83,11 +83,15 @@ export default function SearchPageClient({ blogIndex, securityIndex }: SearchPag
   const searchParams = useSearchParams()
   const query = searchParams.get('q')?.trim() ?? ''
   const keyword = query.toLowerCase()
+  const deferredKeyword = useDeferredValue(keyword)
 
-  const blogResults = useMemo(() => filterResults(blogIndex, keyword), [blogIndex, keyword])
+  const blogResults = useMemo(
+    () => filterResults(blogIndex, deferredKeyword),
+    [blogIndex, deferredKeyword]
+  )
   const securityResults = useMemo(
-    () => filterResults(securityIndex, keyword),
-    [securityIndex, keyword]
+    () => filterResults(securityIndex, deferredKeyword),
+    [securityIndex, deferredKeyword]
   )
 
   return (
@@ -104,7 +108,7 @@ export default function SearchPageClient({ blogIndex, securityIndex }: SearchPag
       <div className="space-y-10 py-10">
         {!query ? (
           <div className="rounded-3xl border border-dashed border-gray-300 px-6 py-12 text-center text-gray-500 dark:border-gray-700 dark:text-gray-400">
-            请输入关键词开始搜索，例如 FastAPI、Gemini、owasp、pikachu、sqli。
+            请输入关键词开始搜索，例如 FastAPI、Gemini、OWASP、Pikachu、SQLi。
           </div>
         ) : (
           <>

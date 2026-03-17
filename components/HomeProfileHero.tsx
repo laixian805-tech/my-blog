@@ -60,11 +60,11 @@ export default function HomeProfileHero({
                   Blog Stats
                 </p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  访问趋势与来源详情请在 Vercel Analytics 后台查看。
+                  这里展示站内内容概览与建站信息，访客趋势暂未在首页公开。
                 </p>
               </div>
               <div className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300">
-                Stable
+                Overview
               </div>
             </div>
             <HomeSiteStats
