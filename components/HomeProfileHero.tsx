@@ -53,17 +53,12 @@ export default function HomeProfileHero({
             </p>
           </div>
 
-          <div className="rounded-[30px] border border-slate-200/80 bg-white/70 p-5 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.65)] backdrop-blur dark:border-gray-800 dark:bg-gray-950/60">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase dark:text-slate-500">
-                  Blog Stats
-                </p>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  这里展示站内内容概览与建站信息，访客趋势暂未在首页公开。
-                </p>
-              </div>
-              <div className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300">
+          <div className="rounded-[28px] border border-gray-100 bg-white p-5 shadow-[0_4px_20px_rgba(15,23,42,0.04)] sm:p-6 dark:border-gray-800 dark:bg-gray-950/85 dark:shadow-[0_10px_30px_rgba(2,6,23,0.18)]">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold tracking-[0.26em] text-slate-400 uppercase dark:text-slate-500">
+                Blog Stats
+              </p>
+              <div className="rounded-full bg-sky-50 px-3 py-1 text-[11px] font-medium tracking-[0.12em] text-sky-600 uppercase dark:bg-sky-500/12 dark:text-sky-300">
                 Overview
               </div>
             </div>
