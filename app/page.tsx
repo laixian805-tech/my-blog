@@ -7,7 +7,16 @@ export default async function Page() {
   const publishedSecurityNotes = allSecurityNotes.filter((post) => !post.draft)
   const sortedPosts = sortPosts(publishedBlogs)
   const posts = allCoreContent(sortedPosts)
-  const totalPosts = publishedBlogs.length + publishedSecurityNotes.length
+  const blogPostCount = publishedBlogs.length
+  const securityPostCount = publishedSecurityNotes.length
+  const totalPosts = blogPostCount + securityPostCount
 
-  return <Main posts={posts} totalPosts={totalPosts} />
+  return (
+    <Main
+      posts={posts}
+      totalPosts={totalPosts}
+      blogPostCount={blogPostCount}
+      securityPostCount={securityPostCount}
+    />
+  )
 }

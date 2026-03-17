@@ -5,12 +5,19 @@ import siteMetadata from '@/data/siteMetadata'
 
 interface HomeProfileHeroProps {
   totalPosts: number
+  blogPostCount: number
+  securityPostCount: number
   className?: string
 }
 
 const SITE_START_DATE = '2026-03-06T00:00:00+08:00'
 
-export default function HomeProfileHero({ totalPosts, className = '' }: HomeProfileHeroProps) {
+export default function HomeProfileHero({
+  totalPosts,
+  blogPostCount,
+  securityPostCount,
+  className = '',
+}: HomeProfileHeroProps) {
   return (
     <div className={`pt-6 pb-10 ${className}`}>
       <div className="grid gap-8 rounded-[32px] border border-slate-200 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(241,245,249,0.9))] p-6 shadow-[0_25px_70px_-50px_rgba(15,23,42,0.55)] sm:p-8 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] lg:items-center dark:border-gray-800 dark:bg-[linear-gradient(135deg,rgba(3,7,18,0.98),rgba(15,23,42,0.92))]">
@@ -52,7 +59,15 @@ export default function HomeProfileHero({ totalPosts, className = '' }: HomeProf
                 Blog Stats
               </p>
             </div>
-            <HomeSiteStats totalPosts={totalPosts} siteStartDate={SITE_START_DATE} />
+            <HomeSiteStats
+              totalPosts={totalPosts}
+              blogPostCount={blogPostCount}
+              securityPostCount={securityPostCount}
+              siteStartDate={SITE_START_DATE}
+            />
+            <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
+              访问数据已迁移到 Vercel Analytics 仪表盘查看。
+            </p>
           </div>
         </div>
       </div>

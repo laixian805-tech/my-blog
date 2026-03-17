@@ -9,6 +9,8 @@ const MAX_DISPLAY = 5
 export default function Home({
   posts,
   totalPosts,
+  blogPostCount,
+  securityPostCount,
 }: {
   posts: Array<{
     slug: string
@@ -17,12 +19,18 @@ export default function Home({
     summary?: string
   }>
   totalPosts: number
+  blogPostCount: number
+  securityPostCount: number
 }) {
   return (
     <>
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
         <div>
-          <HomeProfileHero totalPosts={totalPosts} />
+          <HomeProfileHero
+            totalPosts={totalPosts}
+            blogPostCount={blogPostCount}
+            securityPostCount={securityPostCount}
+          />
         </div>
         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
           {!posts.length && '还没有发布文章。'}

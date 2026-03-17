@@ -458,6 +458,12 @@ public/static/images/avatar-new.png
 - `/search?q=...` 这类查询页开箱即用
 - 不需要你额外处理 Node 服务和路由问题
 
+说明：
+
+- 当前仓库已经不再使用 GitHub Pages 工作流部署
+- 如果仓库里之前开过 GitHub Pages，可以在 GitHub 仓库的 `Settings > Pages` 里关闭或忽略原有配置
+- 现在建议统一通过 Vercel 连接 GitHub 仓库自动部署
+
 ### 17.2 静态导出
 
 项目仍然保留静态导出能力，但当前版本更推荐作为补充方案。
