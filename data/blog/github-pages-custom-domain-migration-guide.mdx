@@ -1,0 +1,541 @@
+---
+title: '以后真正接入自定义域名时，我该怎么把 GitHub Pages 迁过去'
+date: '2026-03-18'
+tags: ['GitHub Pages', '域名', 'DNS', 'Next.js']
+draft: false
+summary: '按当前仓库的真实配置，整理一份从 GitHub Pages 项目页 /my-blog 迁到独立自定义域名时的完整迁移手册，包括 DNS、GitHub Pages、BASE_PATH、SITE_URL 和验证步骤。'
+authors: ['default']
+layout: PostLayout
+---
+
+这篇文章不是在描述“当前已经完成的事情”，而是在整理一份 **以后真正要迁移时，我可以照着执行的手册**。
+
+先把现状说清楚：
+
+- 当前站点地址是 `https://laixian805-tech.github.io/my-blog`
+- 当前部署方式是 `GitHub Actions + GitHub Pages`
+- 当前构建时使用了 `BASE_PATH=/my-blog`
+- 当前还没有绑定自定义域名
+
+所以这篇文章讨论的是：
+
+**以后如果我要把这个站点从 GitHub Pages 项目页迁到独立自定义域名，应该怎么做。**
+
+## 一、先理解这次迁移真正要改的是什么
+
+看起来像是在“改一个访问地址”，但实际上会同时影响 4 层：
+
+1. 域名和 DNS
+2. GitHub Pages 的自定义域名配置
+3. Next.js 构建参数
+4. 站点里的绝对地址和 SEO 配置
+
+如果只改其中一层，其他几层不跟着改，常见结果就是：
+
+- 页面能打开，但资源路径不对
+- 首页能打开，但文章详情页 404
+- canonical 还是旧地址
+- RSS、sitemap、分享图还是旧域名
+- 搜索页或分页链接仍然带旧的 `/my-blog`
+
+所以这件事不能只理解成“把网址换一下”。
+
+## 二、先做一个关键判断：我要迁到哪种域名形态
+
+这一步比技术细节更重要。
+
+### 方案 A：子域名
+
+例如：
+
+```text
+blog.example.com
+```
+
+这通常是我更推荐的方案，因为博客职责清楚，也更不容易和主站其他内容打架。
+
+### 方案 B：根域名
+
+例如：
+
+```text
+example.com
+```
+
+这适合“博客本身就是主站”的情况。
+
+### 方案 C：保留路径子目录
+
+例如：
+
+```text
+example.com/my-blog
+```
+
+对当前这个仓库来说，**如果走 GitHub Pages 的标准自定义域名方案，通常不会优先这样做**。更常见的做法是把站点直接放到自定义域名根路径，而不是继续保留 `/my-blog` 这个子路径。
+
+所以如果我以后真的绑定：
+
+- `blog.example.com`
+- 或 `example.com`
+
+那大多数情况下，我都应该准备把：
+
+```text
+BASE_PATH=/my-blog
+```
+
+改成空值，也就是不再使用 `basePath`。
+
+这一步非常关键。
+
+## 三、为什么当前的 `/my-blog` 以后大概率要移除
+
+现在之所以有 `/my-blog`，是因为当前站点托管在 GitHub Pages 的 **项目页** 下。
+
+当前访问路径是：
+
+```text
+https://laixian805-tech.github.io/my-blog
+```
+
+其中：
+
+- `laixian805-tech.github.io` 是 GitHub Pages 域名
+- `/my-blog` 是这个仓库的项目路径前缀
+
+但如果后面绑定独立域名，例如：
+
+```text
+https://blog.example.com
+```
+
+这个站点通常会直接挂在域名根路径，也就是：
+
+```text
+/
+```
+
+而不是：
+
+```text
+/my-blog
+```
+
+这意味着下面这些东西大概率都要一起调整：
+
+- GitHub Actions 中的 `BASE_PATH`
+- `next.config.js` 中的 `basePath`
+- 构建后所有链接的实际前缀
+- SEO 里的 `SITE_URL`
+
+Next.js 官方文档也明确提到，`basePath` 是 **构建时写进客户端包里的**，不能只改线上配置而不重新构建。
+
+所以只要域名形态从“项目页”变成“独立域名根路径”，就必须重新构建并发布。
+
+## 四、这次迁移的推荐顺序
+
+为了尽量稳，我会按下面这个顺序做。
+
+### 第一步：先选好最终正式域名
+
+先不要急着改仓库配置，先定下来：
+
+- 我最终要用哪个域名
+- 它是根域名还是子域名
+- 以后是否长期保持不变
+
+例如：
+
+- `blog.example.com`
+- `notes.example.com`
+- `example.com`
+
+如果正式域名还没想清楚，后面所有配置都可能白改。
+
+### 第二步：先在 GitHub Pages 里配置 Custom domain
+
+这一点很重要。
+
+GitHub 官方文档建议：**先在 GitHub 仓库里添加自定义域名，再去 DNS 提供商那里配 DNS**。这样更安全，也能降低域名被别人抢占使用的风险。
+
+路径大致是：
+
+```text
+GitHub 仓库 -> Settings -> Pages -> Custom domain
+```
+
+在这里输入最终域名，例如：
+
+```text
+blog.example.com
+```
+
+### 第三步：再去域名服务商配置 DNS
+
+这一层的配置，取决于是子域名还是根域名。
+
+#### 如果是子域名
+
+例如：
+
+```text
+blog.example.com
+```
+
+通常会配置一条 `CNAME`，把：
+
+```text
+blog.example.com
+```
+
+指向：
+
+```text
+laixian805-tech.github.io
+```
+
+注意这里指向的是 GitHub Pages 默认域名，不是带仓库路径的完整 URL。
+
+#### 如果是根域名
+
+例如：
+
+```text
+example.com
+```
+
+GitHub 官方文档说明，根域名通常需要配置：
+
+- `ALIAS`
+- `ANAME`
+- 或 `A` 记录
+
+如果用 `A` 记录，GitHub Pages 官方给出的 IPv4 地址是：
+
+```text
+185.199.108.153
+185.199.109.153
+185.199.110.153
+185.199.111.153
+```
+
+如果需要 IPv6，也可以补 `AAAA` 记录。
+
+### 第四步：如果用根域名，顺手把 `www` 也一起规划
+
+GitHub 官方文档建议，如果主域名是：
+
+```text
+example.com
+```
+
+最好也一起考虑：
+
+```text
+www.example.com
+```
+
+这样后续 HTTPS 和重定向体验通常更完整。
+
+## 五、对当前这个仓库来说，代码里到底要改哪些地方
+
+这一节最关键，因为这是“按当前项目实际情况”的部分。
+
+### 1. 改 GitHub Actions 工作流
+
+当前工作流文件是：
+
+- `.github/workflows/deploy-github-pages.yml`
+
+当前里面的关键环境变量是：
+
+```yaml
+EXPORT: '1'
+BASE_PATH: '/my-blog'
+UNOPTIMIZED: '1'
+SITE_URL: 'https://laixian805-tech.github.io/my-blog'
+```
+
+如果以后迁到：
+
+```text
+https://blog.example.com
+```
+
+那么标准情况下一般要改成：
+
+```yaml
+EXPORT: '1'
+UNOPTIMIZED: '1'
+SITE_URL: 'https://blog.example.com'
+```
+
+也就是说：
+
+- `BASE_PATH=/my-blog` 要移除
+- `SITE_URL` 要切到新域名
+
+如果仍然保留 `BASE_PATH=/my-blog`，构建产物里的链接和资源路径很可能还会继续带着 `/my-blog`。
+
+### 2. 改 `next.config.js`
+
+当前项目里 `basePath` 是通过环境变量决定的。
+
+也就是说，只要工作流不再注入：
+
+```text
+BASE_PATH=/my-blog
+```
+
+这里就会退回空路径。
+
+但即使如此，我也仍然建议迁移时重新检查 `next.config.js`，确认这些点：
+
+- `output` 仍然是静态导出模式
+- `basePath` 确实为空
+- `images.unoptimized` 仍适合 GitHub Pages 静态导出
+
+### 3. 改 `data/siteMetadata.js`
+
+这个文件里当前的默认 `siteUrl` 还是 GitHub Pages 地址。
+
+也就是：
+
+```js
+https://laixian805-tech.github.io/my-blog
+```
+
+以后如果正式域名变成：
+
+```text
+https://blog.example.com
+```
+
+那这里至少要确认两件事：
+
+1. `SITE_URL` 环境变量已切换到新域名
+2. 默认兜底值也应该考虑同步修改，避免本地忘传环境变量时继续生成旧地址
+
+### 4. 检查 `app/layout.tsx`
+
+这个文件里会用到：
+
+- `metadataBase`
+- RSS 链接
+- favicon
+- 其他 metadata
+
+如果 `SITE_URL` 已经切对，通常这些内容会跟着更新。
+
+但迁移时我仍然会重点检查：
+
+- canonical
+- OG URL
+- Twitter 图片
+- RSS
+- sitemap
+- robots
+
+### 5. 检查所有绝对地址输出
+
+当前站点里，和绝对地址最相关的地方主要有：
+
+- `siteMetadata.siteUrl`
+- `siteLogo`
+- `socialBanner`
+- `app/robots.ts`
+- `app/sitemap.ts`
+- `app/layout.tsx`
+
+迁移完成后，我会逐个确认这些地方最终生成的是新域名，而不是旧的 GitHub Pages 地址。
+
+## 六、一个最容易被误解的点：CNAME 文件到底要不要
+
+这是非常容易踩坑的一点。
+
+很多旧教程都会说：
+
+- GitHub Pages 自定义域名要配 `CNAME` 文件
+
+但 GitHub 当前官方文档对 **自定义 GitHub Actions 工作流发布** 的说明是：
+
+- 设置自定义域名时，**不会自动创建 `CNAME` 文件**
+- 现有 `CNAME` 文件 **会被忽略**
+- 对这种发布方式来说，`CNAME` **不是必须的**
+
+对当前这个仓库来说，这个结论非常重要，因为我们现在走的就是：
+
+- GitHub Actions
+- `upload-pages-artifact`
+- `deploy-pages`
+
+所以以后迁自定义域名时，我不会优先把注意力放在 `CNAME` 文件上，而会优先关注：
+
+- GitHub Pages 的 `Custom domain`
+- DNS 记录是否正确
+- `SITE_URL`
+- `BASE_PATH`
+
+## 七、迁移时我会准备的一份实际操作清单
+
+如果以后真要动手，我会照下面这个顺序执行。
+
+### 迁移前
+
+1. 确认最终正式域名
+2. 确认是根域名还是子域名
+3. 备份当前工作流和关键配置
+4. 记录当前线上地址和构建参数
+
+### GitHub 侧
+
+1. 打开仓库 `Settings -> Pages`
+2. 在 `Custom domain` 中填入新域名
+3. 保存设置
+4. 等待 GitHub 开始识别域名配置
+
+### DNS 侧
+
+1. 到域名服务商后台
+2. 按域名类型配置 `CNAME` 或 `A/ALIAS/ANAME`
+3. 不使用随意的通配符配置
+4. 等待 DNS 生效
+
+### 仓库代码侧
+
+1. 修改 GitHub Actions 工作流中的 `SITE_URL`
+2. 如果迁到域名根路径，移除 `BASE_PATH=/my-blog`
+3. 检查 `siteMetadata.js` 的默认值是否仍然合理
+4. 重新构建
+
+### 发布后验证
+
+1. 首页能否正常打开
+2. `/blog` 和文章详情页能否正常打开
+3. `/projects`、`/security`、`/search` 能否正常打开
+4. CSS、图片、JS 资源路径是否正确
+5. canonical 是否已切到新域名
+6. RSS、sitemap、robots 是否已切到新域名
+7. GitHub Pages 的 HTTPS 是否可启用
+
+## 八、迁移后我最担心的几个问题
+
+### 1. 忘了移除 `BASE_PATH=/my-blog`
+
+这会导致最常见的问题之一：
+
+- 页面地址已经是新域名
+- 但内部资源和链接仍然继续带 `/my-blog`
+
+结果就是路径错位。
+
+### 2. `SITE_URL` 没更新
+
+这会导致页面也许能访问，但：
+
+- canonical 还是旧地址
+- OG 图片还是旧地址
+- RSS 和 sitemap 还是旧地址
+
+从 SEO 和分享角度看，这种问题很隐蔽，但影响不小。
+
+### 3. 只改了 DNS，没改构建配置
+
+这也是很常见的误区。
+
+域名解析只是入口变了，不代表构建产物自动知道自己应该从哪里加载资源。
+
+### 4. 过早判断失败
+
+GitHub 官方文档提到，DNS 传播可能需要最多 24 小时。
+
+另外，`Enforce HTTPS` 选项也可能不会立刻出现。
+
+所以迁移时不能刚改完 5 分钟就判断“彻底失败”。
+
+## 九、如果以后还想再接 Cloudflare，顺序应该放在哪
+
+如果未来我要同时有：
+
+- 自定义域名
+- GitHub Pages
+- Cloudflare
+
+那我会把顺序定成：
+
+1. 先把 GitHub Pages 自定义域名迁移独立完成
+2. 确认站点在新域名下稳定访问
+3. 再决定是否把 DNS 层交给 Cloudflare
+
+原因是这样更容易排错。
+
+如果我一次性同时改：
+
+- 域名
+- DNS 提供商
+- Pages 配置
+- 构建参数
+- Cloudflare 规则
+
+后面一旦出问题，很难快速判断到底是哪一层配置导致的。
+
+## 十、我给未来自己的最小迁移模板
+
+为了以后真正动手时更直接，我给自己留一份最小模板。
+
+### 目标
+
+把：
+
+```text
+https://laixian805-tech.github.io/my-blog
+```
+
+迁到：
+
+```text
+https://blog.example.com
+```
+
+### 核心动作
+
+1. GitHub Pages 设置 `Custom domain = blog.example.com`
+2. DNS 配置 `CNAME blog -> laixian805-tech.github.io`
+3. GitHub Actions 中去掉 `BASE_PATH=/my-blog`
+4. GitHub Actions 中把 `SITE_URL` 改成 `https://blog.example.com`
+5. 重新构建并发布
+6. 检查首页、文章页、RSS、sitemap、canonical、静态资源
+
+### 迁移完成的标志
+
+当下面这些条件都满足时，我才认为迁移真的完成：
+
+- 新域名首页可访问
+- 文章详情页可访问
+- 页面资源不报 404
+- 所有内部链接不再带 `/my-blog`
+- canonical 和 sitemap 已切到新域名
+- HTTPS 正常
+
+## 十一、参考文档
+
+我这篇手册写法参考了这些官方文档，后面真要执行时，也建议再打开确认一遍：
+
+- [GitHub Pages 自定义域名管理](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site)
+- [GitHub Pages 自定义域名排错](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/troubleshooting-custom-domains-and-github-pages)
+- [Next.js Static Export](https://nextjs.org/docs/pages/guides/static-exports)
+- [Next.js basePath](https://nextjs.org/docs/pages/api-reference/config/next-config-js/basePath)
+
+## 十二、我给自己的结论
+
+如果以后真的要把这个博客迁到自定义域名，最重要的不是“记住很多零碎命令”，而是先抓住这四个核心点：
+
+1. 先定好最终正式域名
+2. 先在 GitHub Pages 配 `Custom domain`
+3. 再配 DNS
+4. 最后同步修改 `BASE_PATH` 和 `SITE_URL` 并重新构建
+
+对当前这个仓库来说，最关键的一句话就是：
+
+**只要未来正式域名不再使用 `/my-blog` 这个项目路径，就要把 `BASE_PATH=/my-blog` 视为需要一起迁移的配置，而不是只改 DNS 就结束。**

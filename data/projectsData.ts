@@ -25,6 +25,12 @@ const projectsData: Project[] = [
     href: '/blog/github-pages-custom-domain-cloudflare-plan',
   },
   {
+    title: '自定义域名迁移手册',
+    description:
+      '按当前仓库的真实配置，整理从 GitHub Pages 项目页 /my-blog 迁到独立域名时，DNS、GitHub Pages、BASE_PATH 和 SITE_URL 应该怎么一起改。',
+    href: '/blog/github-pages-custom-domain-migration-guide',
+  },
+  {
     title: 'FastAPI 学习笔记',
     description:
       '围绕 FastAPI 的定位、分层结构、参数校验和接口开发思路整理的入门型文章，适合作为后端学习起点。',
