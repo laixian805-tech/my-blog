@@ -19,6 +19,12 @@ const projectsData: Project[] = [
     href: '/blog/build-personal-website-notes',
   },
   {
+    title: 'Cloudflare 优化规划',
+    description:
+      '明确说明当前站点还没有接入 Cloudflare，并整理后续如果绑定自定义域名和引入 Cloudflare，可以按什么顺序升级。',
+    href: '/blog/github-pages-custom-domain-cloudflare-plan',
+  },
+  {
     title: 'FastAPI 学习笔记',
     description:
       '围绕 FastAPI 的定位、分层结构、参数校验和接口开发思路整理的入门型文章，适合作为后端学习起点。',
