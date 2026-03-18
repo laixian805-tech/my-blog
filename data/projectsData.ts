@@ -13,6 +13,12 @@ const projectsData: Project[] = [
     href: '/',
   },
   {
+    title: '个人网站搭建实录',
+    description:
+      '完整记录这个博客从技术选型、页面改造、搜索与统计接入，到 GitHub Pages 发布和后续稳定性优化的全过程。',
+    href: '/blog/build-personal-website-notes',
+  },
+  {
     title: 'FastAPI 学习笔记',
     description:
       '围绕 FastAPI 的定位、分层结构、参数校验和接口开发思路整理的入门型文章，适合作为后端学习起点。',

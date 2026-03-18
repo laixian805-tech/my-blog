@@ -67,6 +67,7 @@ export default function HomeProfileHero({
               blogPostCount={blogPostCount}
               securityPostCount={securityPostCount}
               siteStartDate={SITE_START_DATE}
+              siteStatus={siteMetadata.siteStatus}
             />
           </div>
         </div>

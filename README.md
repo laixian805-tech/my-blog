@@ -10,7 +10,7 @@
 - `Security` 页面替代了原来的 `About` 主入口，专门展示网安靶场与漏洞练习笔记
 - 顶栏加入了全站搜索，可同时搜索普通博客文章和 Security 笔记
 - 文章详情页支持目录：桌面端右侧吸顶，手机端折叠展开
-- 首页加入了 `Busuanzi` 访问统计
+- 首页状态区已改为 `Busuanzi UV / Busuanzi PV / 最后更新` 三项展示
 - 默认作者头像已切换为项目内的微信头像图片
 - `Tags`、评论、订阅等首版不需要的能力已下线
 
@@ -292,8 +292,15 @@ layout: PostLayout
 - `description`：首页和 SEO 描述
 - `siteUrl`：正式站点域名
 - `siteRepo`：仓库地址
+- `siteStatus.fallbackUv` / `siteStatus.fallbackPv`：首页状态区兜底 UV/PV
+- `siteStatus.lastUpdated`：首页“最后更新”默认值
 - `github`：GitHub 主页
 - `language` / `locale`：当前保持 `zh-CN`
+
+当前这几个字段默认从环境变量读取：
+
+- `SITE_URL`
+- `NEXT_PUBLIC_LAST_UPDATED`
 
 ### 11.2 修改作者资料和头像
 
@@ -410,18 +417,21 @@ public/static/images/avatar-new.png
 
 ## 15. 首页访问统计说明
 
-首页访问统计使用：
+首页状态区由两部分组成：
 
-- `Busuanzi`
+- 内容统计：本地构建时直接生成
+- 访客统计：使用 `Busuanzi` 前端脚本写入 UV/PV，脚本不可用时回退到 `siteMetadata.js` 里的兜底值
 
 相关组件：
 
 - `components/HomeSiteStats.tsx`
+- `components/SiteStatusPanel.tsx`
 
-如果以后需要关闭统计，可以移除：
+相关配置：
 
-- `app/Main.tsx` 里的 `HomeSiteStats`
-- `next.config.js` 里的 Busuanzi CSP 域名
+- `data/siteMetadata.js` 里的 `siteStatus`
+- `NEXT_PUBLIC_LAST_UPDATED`
+- `components/SiteStatusPanel.tsx` 里的 `Busuanzi` 脚本地址
 
 ## 16. 当前已关闭或移除的功能
 
@@ -443,36 +453,57 @@ public/static/images/avatar-new.png
 
 ### 17.1 推荐：Vercel
 
-这个项目目前最适合直接部署到 Vercel。
+Vercel 仍然是最省心的 Next.js 部署方式，适合作为主站托管。
 
 基本流程：
 
 1. 把仓库推到 GitHub
 2. 在 Vercel 导入该仓库
 3. 使用默认 Next.js 配置部署
-4. 部署成功后，把 `data/siteMetadata.js` 中的 `siteUrl` 改为正式域名
+4. 在 Vercel 环境变量里设置 `SITE_URL`
 
 推荐 Vercel 的原因：
 
 - 对 Next.js 支持最好
 - `/search?q=...` 这类查询页开箱即用
-- 不需要你额外处理 Node 服务和路由问题
+- 不需要你额外处理静态导出路径和 Pages 工作流
 
 说明：
 
-- 当前仓库已经不再使用 GitHub Pages 工作流部署
-- 如果仓库里之前开过 GitHub Pages，可以在 GitHub 仓库的 `Settings > Pages` 里关闭或忽略原有配置
-- 现在建议统一通过 Vercel 连接 GitHub 仓库自动部署
+- 当前仓库已经补回 GitHub Pages 工作流，Vercel 和 GitHub Pages 都可以作为部署目标
 
-### 17.2 静态导出
+### 17.2 GitHub Pages（项目页 /my-blog）
 
-项目仍然保留静态导出能力，但当前版本更推荐作为补充方案。
+当前仓库已经适配 GitHub Pages 项目页：
+
+- 目标地址：`https://laixian805-tech.github.io/my-blog`
+- 工作流文件：`.github/workflows/deploy-github-pages.yml`
+- 构建环境变量：
+  - `EXPORT=1`
+  - `BASE_PATH=/my-blog`
+  - `UNOPTIMIZED=1`
+  - `SITE_URL=https://laixian805-tech.github.io/my-blog`
+  - `NEXT_PUBLIC_LAST_UPDATED=<git log -1 --format=%cs>`
+
+需要在 GitHub 仓库里额外配置：
+
+1. `Settings > Pages` 中将 Source 切为 `GitHub Actions`
+
+说明：
+
+- GitHub Pages 版本依然支持 `/search?q=关键词`
+- `next.config.js` 里的安全响应头在静态导出模式下不会生效，这是 GitHub Pages 的能力边界
+- `Busuanzi` 属于第三方前端统计服务，若脚本暂时不可用，首页仍会展示 `730 / 1460 / 最后更新` 兜底值
+
+### 17.3 手动静态导出
 
 PowerShell 示例：
 
 ```powershell
 $env:EXPORT='1'
 $env:UNOPTIMIZED='1'
+$env:SITE_URL='https://laixian805-tech.github.io/my-blog'
+$env:NEXT_PUBLIC_LAST_UPDATED='2026-03-17'
 yarn build
 ```
 
@@ -482,13 +513,16 @@ yarn build
 $env:EXPORT='1'
 $env:UNOPTIMIZED='1'
 $env:BASE_PATH='/my-blog'
+$env:SITE_URL='https://laixian805-tech.github.io/my-blog'
+$env:NEXT_PUBLIC_LAST_UPDATED='2026-03-17'
 yarn build
 ```
 
 提示：
 
 - 静态导出更适合纯内容浏览
-- 如果你希望顶栏搜索的体验完整，优先使用 Vercel 或其他 Node 运行环境
+- 当前搜索页在静态导出下依然可用，因为索引在构建时生成，查询在客户端完成
+- 首页 UV/PV 采用 `Busuanzi`，不需要额外部署统计后端
 
 ## 18. 常见问题
 

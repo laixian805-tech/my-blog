@@ -1,8 +1,15 @@
+import SiteStatusPanel from '@/components/SiteStatusPanel'
+
 interface HomeSiteStatsProps {
   totalPosts: number
   blogPostCount: number
   securityPostCount: number
   siteStartDate: string
+  siteStatus: {
+    fallbackUv: number
+    fallbackPv: number
+    lastUpdated: string
+  }
 }
 
 const systemSansStyle = {
@@ -78,15 +85,11 @@ export default function HomeSiteStats({
   blogPostCount,
   securityPostCount,
   siteStartDate,
+  siteStatus,
 }: HomeSiteStatsProps) {
   const siteAgeDays = calculateSiteAgeDays(siteStartDate)
   const blogPercentage = calculatePercentage(blogPostCount, totalPosts)
   const securityPercentage = calculatePercentage(securityPostCount, totalPosts)
-  const statusItems = [
-    { label: '部署平台', value: 'Vercel' },
-    { label: '首页统计', value: '站内概览' },
-    { label: '访客趋势', value: '暂未公开' },
-  ]
 
   return (
     <div className="space-y-4">
@@ -126,29 +129,11 @@ export default function HomeSiteStats({
           </div>
         </div>
 
-        <div className="rounded-[26px] border border-gray-100 bg-white p-5 shadow-[0_4px_20px_rgba(15,23,42,0.04)] dark:border-gray-800 dark:bg-gray-950/90 dark:shadow-[0_10px_24px_rgba(2,6,23,0.16)]">
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">站点状态</p>
-          <div className="mt-5 space-y-4">
-            {statusItems.map((item, index) => (
-              <div
-                key={item.label}
-                className={`flex items-center justify-between gap-6 pb-4 ${
-                  index === statusItems.length - 1
-                    ? 'pb-0'
-                    : 'border-b border-gray-100 dark:border-gray-800'
-                }`}
-              >
-                <span className="text-sm text-slate-400 dark:text-slate-500">{item.label}</span>
-                <span
-                  style={systemSansStyle}
-                  className="text-sm font-semibold text-slate-900 dark:text-slate-100"
-                >
-                  {item.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <SiteStatusPanel
+          fallbackUv={siteStatus.fallbackUv}
+          fallbackPv={siteStatus.fallbackPv}
+          lastUpdated={siteStatus.lastUpdated}
+        />
       </div>
     </div>
   )

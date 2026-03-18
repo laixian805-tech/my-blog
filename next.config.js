@@ -6,7 +6,7 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 const ContentSecurityPolicy = `
   default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline';
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' https://busuanzi.ibruce.info;
   style-src 'self' 'unsafe-inline';
   img-src * blob: data:;
   media-src *.s3.amazonaws.com;
@@ -79,14 +79,18 @@ module.exports = () => {
       ],
       unoptimized,
     },
-    async headers() {
-      return [
-        {
-          source: '/(.*)',
-          headers: securityHeaders,
-        },
-      ]
-    },
+    ...(output === 'export'
+      ? {}
+      : {
+          async headers() {
+            return [
+              {
+                source: '/(.*)',
+                headers: securityHeaders,
+              },
+            ]
+          },
+        }),
     webpack: (config) => {
       config.module.rules.push({
         test: /\.svg$/,
