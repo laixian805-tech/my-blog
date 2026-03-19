@@ -39,8 +39,9 @@ export default function SiteSearchForm({
 
     const trimmedValue = value.trim()
     const nextSearch = trimmedValue ? `?q=${encodeURIComponent(trimmedValue)}` : ''
+    const clientSearchPath = `/search/${nextSearch}`
 
-    router.push(`${searchAction}${nextSearch}`)
+    router.push(clientSearchPath)
     onSubmit?.()
   }
 
