@@ -4,12 +4,16 @@ import { sortPosts } from 'pliny/utils/contentlayer'
 import { genPageMetadata } from 'app/seo'
 import SearchPageClient from '@/components/SearchPageClient'
 
+type SearchSection = 'blog' | 'security'
+
 export type SearchIndexItem = {
   title: string
   summary?: string
   date: string
   path: string
   searchText: string
+  excerptSource: string
+  section: SearchSection
 }
 
 export const metadata = genPageMetadata({
@@ -17,12 +21,13 @@ export const metadata = genPageMetadata({
   description: '搜索站内博客文章与网安笔记。',
 })
 
-function buildSearchExcerpt(raw: string) {
+function cleanSearchText(raw: string) {
   return raw
     .replace(/\s+/g, ' ')
     .replace(/[`*_>#-]/g, ' ')
-    .slice(0, 1200)
-    .toLowerCase()
+    .replace(/[()[\]{}]/g, ' ')
+    .slice(0, 1600)
+    .trim()
 }
 
 function buildSearchIndex(
@@ -32,16 +37,22 @@ function buildSearchIndex(
     date: string
     path: string
     body: { raw: string }
-  }>
+  }>,
+  section: SearchSection
 ) {
-  return items.map((item) => ({
-    title: item.title,
-    summary: item.summary,
-    date: item.date,
-    path: item.path,
-    searchText:
-      `${item.title} ${item.summary || ''} ${buildSearchExcerpt(item.body.raw)}`.toLowerCase(),
-  }))
+  return items.map((item) => {
+    const excerptSource = cleanSearchText(item.body.raw)
+
+    return {
+      title: item.title,
+      summary: item.summary,
+      date: item.date,
+      path: item.path,
+      section,
+      excerptSource,
+      searchText: `${item.title} ${item.summary || ''} ${excerptSource}`.toLowerCase(),
+    }
+  })
 }
 
 function SearchPageFallback() {
@@ -52,7 +63,7 @@ function SearchPageFallback() {
           搜索
         </h1>
         <p className="max-w-3xl text-base leading-7 text-gray-500 dark:text-gray-400">
-          搜索范围覆盖普通博客文章和 Security 区笔记，支持标题、摘要和正文内容匹配。
+          正在准备站内搜索索引，请稍候片刻。
         </p>
       </div>
 
@@ -66,8 +77,11 @@ function SearchPageFallback() {
 }
 
 export default function SearchPage() {
-  const blogIndex = buildSearchIndex(sortPosts(allBlogs.filter((post) => !post.draft)))
-  const securityIndex = buildSearchIndex(sortPosts(allSecurityNotes.filter((post) => !post.draft)))
+  const blogIndex = buildSearchIndex(sortPosts(allBlogs.filter((post) => !post.draft)), 'blog')
+  const securityIndex = buildSearchIndex(
+    sortPosts(allSecurityNotes.filter((post) => !post.draft)),
+    'security'
+  )
 
   return (
     <Suspense fallback={<SearchPageFallback />}>
