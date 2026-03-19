@@ -1,9 +1,8 @@
 'use client'
 
-/* eslint-disable @next/next/no-img-element */
-
 import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react'
 import { Fragment, useState } from 'react'
+import Image from '@/components/Image'
 import Link from '@/components/Link'
 import { PortalCategory, PortalLink, portalCategories, portalLinks } from '@/data/portalData'
 import { PortalGlyph } from './PortalIcons'
@@ -41,6 +40,46 @@ function getCategoryAccentClasses(categoryId: string, active: boolean) {
 
 function getCategoryBadgeClasses(categoryId: string) {
   return getCategoryAccentClasses(categoryId, false)
+}
+
+function getCategorySiteIconClasses(categoryId: string) {
+  const toneMap = {
+    all: 'bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow-[0_14px_28px_-18px_rgba(14,165,233,0.85)]',
+    algorithm:
+      'bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-[0_14px_28px_-18px_rgba(168,85,247,0.85)]',
+    backend:
+      'bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-[0_14px_28px_-18px_rgba(16,185,129,0.85)]',
+    ai: 'bg-gradient-to-br from-fuchsia-500 to-pink-500 text-white shadow-[0_14px_28px_-18px_rgba(217,70,239,0.85)]',
+    job: 'bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-[0_14px_28px_-18px_rgba(245,158,11,0.9)]',
+    security:
+      'bg-gradient-to-br from-rose-500 to-red-500 text-white shadow-[0_14px_28px_-18px_rgba(244,63,94,0.85)]',
+    community:
+      'bg-gradient-to-br from-cyan-500 to-sky-500 text-white shadow-[0_14px_28px_-18px_rgba(6,182,212,0.85)]',
+    tools:
+      'bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-[0_14px_28px_-18px_rgba(249,115,22,0.85)]',
+  } as const
+
+  return toneMap[categoryId as keyof typeof toneMap] ?? toneMap.all
+}
+
+function getCategoryExternalClasses(categoryId: string) {
+  const toneMap = {
+    all: 'text-sky-300 group-hover:text-sky-500 dark:text-sky-400/80 dark:group-hover:text-sky-300',
+    algorithm:
+      'text-violet-300 group-hover:text-violet-500 dark:text-violet-400/80 dark:group-hover:text-violet-300',
+    backend:
+      'text-emerald-300 group-hover:text-emerald-500 dark:text-emerald-400/80 dark:group-hover:text-emerald-300',
+    ai: 'text-fuchsia-300 group-hover:text-fuchsia-500 dark:text-fuchsia-400/80 dark:group-hover:text-fuchsia-300',
+    job: 'text-amber-300 group-hover:text-amber-500 dark:text-amber-400/80 dark:group-hover:text-amber-300',
+    security:
+      'text-rose-300 group-hover:text-rose-500 dark:text-rose-400/80 dark:group-hover:text-rose-300',
+    community:
+      'text-cyan-300 group-hover:text-cyan-500 dark:text-cyan-400/80 dark:group-hover:text-cyan-300',
+    tools:
+      'text-orange-300 group-hover:text-orange-500 dark:text-orange-400/80 dark:group-hover:text-orange-300',
+  } as const
+
+  return toneMap[categoryId as keyof typeof toneMap] ?? toneMap.all
 }
 
 function getCategoryLabel(categoryId: string) {
@@ -93,22 +132,37 @@ function CategoryButton({
   )
 }
 
-function PortalSiteIcon({ title, iconPath }: { title: string; iconPath?: string }) {
+function PortalSiteIcon({
+  title,
+  iconPath,
+  categoryId,
+}: {
+  title: string
+  iconPath?: string
+  categoryId: string
+}) {
   const [failed, setFailed] = useState(!iconPath)
 
   if (!iconPath || failed) {
     return (
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-lg font-bold text-white dark:bg-slate-100 dark:text-slate-900">
+      <div
+        className={`flex h-12 w-12 items-center justify-center rounded-2xl text-lg font-bold ${getCategorySiteIconClasses(
+          categoryId
+        )}`}
+      >
         {title.slice(0, 1).toUpperCase()}
       </div>
     )
   }
 
   return (
-    <img
+    <Image
       src={iconPath}
       alt={`${title} 图标`}
-      className="h-12 w-12 rounded-2xl border border-slate-200 bg-white object-contain p-1.5 dark:border-gray-700 dark:bg-gray-900"
+      width={48}
+      height={48}
+      unoptimized
+      className="h-12 w-12 rounded-2xl border border-slate-200 bg-white object-contain p-1.5 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.75)] dark:border-gray-700 dark:bg-gray-900"
       onError={() => setFailed(true)}
     />
   )
@@ -125,7 +179,7 @@ function PortalCard({ link, showCategoryLabel }: { link: PortalLink; showCategor
       aria-label={`打开 ${link.title}`}
     >
       <div className="flex items-start gap-4">
-        <PortalSiteIcon title={link.title} iconPath={link.iconPath} />
+        <PortalSiteIcon title={link.title} iconPath={link.iconPath} categoryId={link.categoryId} />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -136,7 +190,7 @@ function PortalCard({ link, showCategoryLabel }: { link: PortalLink; showCategor
                 {getDomainLabel(link.url)}
               </p>
             </div>
-            <span className="text-slate-300 transition group-hover:text-sky-500 dark:text-slate-600 dark:group-hover:text-sky-300">
+            <span className={`transition ${getCategoryExternalClasses(link.categoryId)}`}>
               <PortalGlyph name="external" className="h-4 w-4" />
             </span>
           </div>
