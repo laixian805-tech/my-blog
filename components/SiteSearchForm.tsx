@@ -1,7 +1,7 @@
 'use client'
 
 import { FormEvent, useEffect, useId, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { withSitePath } from '@/lib/sitePath'
 
 interface SiteSearchFormProps {
@@ -19,6 +19,7 @@ export default function SiteSearchForm({
   inputClassName = '',
   onSubmit,
 }: SiteSearchFormProps) {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const inputId = useId()
   const currentQuery = searchParams.get('q') ?? ''
@@ -31,9 +32,15 @@ export default function SiteSearchForm({
   const formClassName = compact
     ? 'flex w-full items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 shadow-sm transition focus-within:border-sky-300 focus-within:ring-2 focus-within:ring-sky-100 dark:border-gray-800 dark:bg-gray-950 dark:focus-within:border-sky-500 dark:focus-within:ring-sky-500/20'
     : 'flex w-full items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2.5 shadow-sm transition focus-within:border-sky-300 focus-within:ring-2 focus-within:ring-sky-100 dark:border-gray-800 dark:bg-gray-950 dark:focus-within:border-sky-500 dark:focus-within:ring-sky-500/20'
-  const searchAction = withSitePath('/search')
+  const searchAction = withSitePath('/search/')
 
-  const submit = (_event: FormEvent<HTMLFormElement>) => {
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const trimmedValue = value.trim()
+    const nextSearch = trimmedValue ? `?q=${encodeURIComponent(trimmedValue)}` : ''
+
+    router.push(`${searchAction}${nextSearch}`)
     onSubmit?.()
   }
 
