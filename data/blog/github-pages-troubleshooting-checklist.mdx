@@ -1,0 +1,530 @@
+---
+title: 'GitHub Pages 发布失败、域名不生效、资源 404 时，我该怎么排查'
+date: '2026-03-19'
+tags: ['GitHub Pages', 'GitHub Actions', '排错', 'Next.js']
+draft: false
+summary: '基于当前仓库的实际配置，整理一份 GitHub Pages 常见故障排查手册，覆盖 Actions 构建失败、Pages 不更新、静态资源 404、/my-blog 路径错误、自定义域名异常和 HTTPS 不生效等问题。'
+authors: ['default']
+layout: PostLayout
+---
+
+这篇文章是一份“以后出问题时我能直接照着查”的排错手册。
+
+它不是讲理想情况，而是专门针对当前这个仓库的真实情况来写：
+
+- 框架是 `Next.js`
+- 内容来自 `MDX + Contentlayer`
+- 发布方式是 `GitHub Actions + GitHub Pages`
+- 线上当前是项目页：
+
+```text
+https://laixian805-tech.github.io/my-blog
+```
+
+- 当前构建依赖：
+
+```text
+EXPORT=1
+BASE_PATH=/my-blog
+UNOPTIMIZED=1
+SITE_URL=https://laixian805-tech.github.io/my-blog
+```
+
+所以后面凡是排查 GitHub Pages 问题，我都会先带着这个前提去看。
+
+## 一、先学会一个最重要的排查顺序
+
+很多人一出问题就开始乱改配置，但 GitHub Pages 这类问题真正更稳的排查方式，是按层来查。
+
+我会固定按这 5 层顺序看：
+
+1. 本地构建有没有通过
+2. GitHub Actions 有没有通过
+3. Pages 有没有拿到最新产物
+4. 页面路径和静态资源路径对不对
+5. 域名和 HTTPS 有没有单独问题
+
+这套顺序很重要，因为不同层的问题表现很像，但根因完全不同。
+
+例如：
+
+- 页面 404，可能是 Actions 没部署成功
+- 页面 404，也可能是 `BASE_PATH` 错了
+- 页面 404，还可能是自定义域名没配好
+
+如果不分层，排错会非常乱。
+
+## 二、先确认“问题到底发生在哪一层”
+
+我一般会先问自己这几个问题：
+
+### 1. 本地 `yarn build` 能过吗
+
+如果本地都过不了，那问题通常不在 GitHub Pages，而在代码本身。
+
+优先跑：
+
+```bash
+yarn build
+```
+
+如果我要模拟当前线上 GitHub Pages 的构建方式，再跑：
+
+```powershell
+$env:EXPORT='1'
+$env:BASE_PATH='/my-blog'
+$env:UNOPTIMIZED='1'
+$env:SITE_URL='https://laixian805-tech.github.io/my-blog'
+$env:NEXT_PUBLIC_LAST_UPDATED='2026-03-19'
+yarn build
+```
+
+这一步非常关键，因为：
+
+- 本地普通构建能过
+- 不代表静态导出构建也能过
+
+而当前线上用的正是静态导出路线。
+
+### 2. GitHub Actions 绿了吗
+
+如果本地没问题，下一步就看：
+
+```text
+GitHub 仓库 -> Actions
+```
+
+重点看工作流：
+
+- `Deploy GitHub Pages`
+
+如果这里是红的，问题基本还在构建或上传产物阶段，不要急着怀疑 Pages 本身。
+
+### 3. Actions 绿了，但页面还是旧的？
+
+这种情况就要继续判断：
+
+- 是 Pages 还没切到最新产物
+- 还是浏览器缓存
+- 还是你访问的不是最终正确地址
+
+### 4. 页面打开了，但 CSS / 图片 / JS 404？
+
+这类问题大概率要去怀疑：
+
+- `BASE_PATH`
+- `SITE_URL`
+- 静态资源路径
+
+### 5. 页面和资源都正常，但域名不通或 HTTPS 没出来？
+
+那就大概率已经不是 Next.js 构建问题，而是：
+
+- GitHub Pages 设置
+- DNS
+- 自定义域名
+- 证书和 HTTPS 传播
+
+## 三、最常见的第一类问题：GitHub Actions 构建失败
+
+这一类问题最先看日志，不要猜。
+
+当前仓库的工作流文件是：
+
+- `.github/workflows/deploy-github-pages.yml`
+
+### 场景 1：`yarn install` 失败
+
+这通常先看：
+
+- `yarn.lock` 是否一致
+- 最近是否改了依赖但没提交锁文件
+- 包管理器版本是否和本地差异过大
+
+我这类问题的第一反应通常是：
+
+1. 本地重新 `yarn install`
+2. 本地重新 `yarn build`
+3. 确认锁文件确实已提交
+
+### 场景 2：Contentlayer 相关报错
+
+当前仓库内容很多来自 `data/blog/*.mdx` 和 `data/security/*.mdx`。
+
+所以如果新增文章后构建炸了，我会优先检查：
+
+- frontmatter 是否完整
+- 日期格式是否规范
+- MDX 里有没有没闭合的代码块
+- 标题、列表、引用块有没有写坏
+- 有没有写进奇怪的本地路径或非法 JSX
+
+这个仓库最容易出问题的地方之一，就是“文章内容本身”。
+
+### 场景 3：静态导出相关 warning 或 error
+
+Next.js 官方文档明确说明，`output: 'export'` 下：
+
+- `headers`
+- `rewrites`
+- `redirects`
+
+这类服务端能力并不适用。
+
+所以如果以后看到和静态导出有关的报错，我会优先回头检查：
+
+- `next.config.js`
+- 最近是否新增了不适合静态导出的配置
+- 最近是否新增了必须依赖服务端运行的逻辑
+
+当前仓库已经做过一个处理：
+
+- 只有非导出模式才启用 `headers()`
+
+这就是为了避免 GitHub Pages 静态导出阶段继续报无意义 warning。
+
+## 四、第二类常见问题：GitHub Actions 成功了，但 GitHub Pages 没更新
+
+这种情况最容易让人误判。
+
+我会按下面顺序查。
+
+### 1. 先确认仓库 `Pages` 设置没跑偏
+
+正确路径是：
+
+```text
+GitHub 仓库 -> Settings -> Pages
+```
+
+当前这个仓库应该保持：
+
+- Source = `GitHub Actions`
+
+如果这里被切回了别的来源，例如 branch 发布，那 Actions 虽然能成功，Pages 也可能根本不是从当前工作流拿产物。
+
+### 2. 确认你访问的是正确地址
+
+当前线上正确地址应该是：
+
+```text
+https://laixian805-tech.github.io/my-blog
+```
+
+如果你访问的是：
+
+```text
+https://laixian805-tech.github.io
+```
+
+那就不是当前项目页地址。
+
+### 3. 刷新缓存
+
+如果 Actions 刚成功，但页面看起来还是旧的，我会先做最简单的排除：
+
+- 强制刷新
+- 无痕窗口打开
+- 手机流量单独访问一次
+
+因为有时候你以为是 Pages 没更新，其实只是本地缓存还在。
+
+### 4. 去 Actions 日志里看 `deploy-pages` 步骤
+
+GitHub 官方 `custom workflows` 文档里给出的标准链路是：
+
+- `configure-pages`
+- `upload-pages-artifact`
+- `deploy-pages`
+
+如果前两个成功，但最后一个失败，页面自然不会更新。
+
+## 五、第三类高频问题：页面能开，但 CSS、图片、JS 全部 404
+
+这个问题在当前仓库里特别值得重视，因为我们现在是项目页部署：
+
+```text
+/my-blog
+```
+
+也就是说，资源路径必须带前缀：
+
+```text
+/my-blog/_next/...
+/my-blog/static/...
+```
+
+### 最常见根因：`BASE_PATH` 不对
+
+当前线上 GitHub Pages 构建依赖：
+
+```text
+BASE_PATH=/my-blog
+```
+
+如果未来有人不小心：
+
+- 在工作流里删了 `BASE_PATH`
+- 或本地没有按 GitHub Pages 方式构建
+- 或部署了错误产物
+
+那最常见的现象就是：
+
+- HTML 打开了
+- 但资源路径跑到了 `/_next/...`
+- 页面样式全丢
+- 图片打不开
+
+### 我会怎么验证
+
+直接查看页面源码，重点找：
+
+- `/_next/`
+- `/my-blog/_next/`
+
+如果线上当前还是 GitHub Pages 项目页，那么正确结果应该是后者。
+
+### 图片问题也要看 `UNOPTIMIZED`
+
+当前仓库的 GitHub Pages 路线里还有一个重要条件：
+
+```text
+UNOPTIMIZED=1
+```
+
+这是因为静态导出环境下，不能依赖 Next.js 运行时图片优化服务。
+
+如果以后有人把这项去掉，可能会出现：
+
+- 图片路径异常
+- 图片无法正常加载
+
+## 六、第四类问题：首页能打开，但文章详情页或分页 404
+
+这种问题通常和“局部路径”有关。
+
+### 1. 先看是不是只有一部分路由出问题
+
+例如：
+
+- 首页正常
+- `/blog` 正常
+- `/blog/[slug]` 404
+- `/blog/page/2` 404
+
+这时候我会优先检查：
+
+- 本地静态导出是否真的生成了对应页面
+- 文章 frontmatter 是否完整
+- slug 是否异常
+
+### 2. 检查 `out/` 目录里有没有对应文件
+
+最直接的办法是看导出结果里是否真的存在：
+
+- `out/blog/index.html`
+- `out/blog/page/2/index.html`
+- `out/blog/<slug>/index.html`
+
+如果产物里都没有，那问题不在 Pages，而在构建阶段就已经没生成。
+
+### 3. 新文章最容易出错的点
+
+如果是某一篇新文章打不开，我会优先看：
+
+- frontmatter 缺字段
+- `draft: true`
+- 文件名和 slug 异常
+- MDX 正文写坏
+
+## 七、第五类问题：自定义域名不生效
+
+这部分要和“当前还没接域名”区分开。
+
+当前站点还没有自定义域名，所以如果以后开始做这件事，我会单独这样排查。
+
+### 1. 先看 GitHub Pages 里的 `Custom domain` 是否已保存
+
+路径：
+
+```text
+Settings -> Pages -> Custom domain
+```
+
+如果这里都还没保存成功，先不要去怀疑 DNS。
+
+### 2. 再看 DNS 记录是不是按域名类型配置
+
+GitHub 官方文档说明：
+
+- 子域名常用 `CNAME`
+- 根域名常用 `A/ALIAS/ANAME`
+
+而且有一个很容易忽略的点：
+
+如果你配置的是子域名，不建议把子域名再指向 apex domain，否则可能带来 HTTPS 和解析异常。
+
+### 3. 如果提示 “domain is already taken”
+
+GitHub 官方文档提到，这种情况可能意味着：
+
+- 这个域名还挂在别的仓库上
+- 旧仓库上的自定义域名没有移除
+
+这时候不要硬试，先去旧仓库把域名解绑。
+
+### 4. 记得域名验证
+
+GitHub 官方文档推荐先验证自定义域名，以降低 takeover 风险。
+
+这一步虽然不是“页面打不开时立刻修复”的关键动作，但从安全角度非常值得做。
+
+## 八、第六类问题：自定义域名下 HTTPS 迟迟不出来
+
+这个问题也很常见。
+
+### 1. 先不要太早判断失败
+
+GitHub 官方文档说明，DNS 传播可能需要最多 24 小时。
+
+所以如果你刚改完 DNS，`Enforce HTTPS` 暂时没法勾，不能立刻断定配置错了。
+
+### 2. 检查 DNS 是否完整正确
+
+特别要看：
+
+- 根域名记录是否齐全
+- `www` 和 apex 是否按你预期配置
+- 子域名有没有错误指向
+
+### 3. 检查是否有冲突配置
+
+如果你以后真的再叠一层 Cloudflare，那么还要额外判断：
+
+- 是 GitHub Pages 自身 HTTPS 问题
+- 还是 Cloudflare 代理层问题
+
+所以我仍然建议：
+
+**先把 GitHub Pages 自定义域名单独跑通，再考虑叠加 Cloudflare。**
+
+## 九、第七类问题：Busuanzi 不更新，但页面本身正常
+
+这类问题不属于 Pages 主故障，但用户很容易第一眼先看到。
+
+当前首页状态区逻辑是：
+
+- 首屏先显示兜底值
+- 然后浏览器加载 `Busuanzi` 脚本覆盖 UV/PV
+
+所以如果出现：
+
+- 页面正常
+- 文章正常
+- 只有 UV/PV 没更新
+
+那我会先判断：
+
+- `Busuanzi` 脚本是否能加载
+- 当前网络环境是否能访问第三方脚本
+- 是否只是第三方统计短时不可用
+
+这类问题通常不是 GitHub Pages 部署故障。
+
+## 十、最适合我自己的“最小排错命令清单”
+
+为了以后自己真出问题时不慌，我给自己留一套最小命令。
+
+### 1. 看工作区
+
+```bash
+git status
+```
+
+### 2. 本地普通构建
+
+```bash
+yarn build
+```
+
+### 3. 本地模拟 GitHub Pages 构建
+
+```powershell
+$env:EXPORT='1'
+$env:BASE_PATH='/my-blog'
+$env:UNOPTIMIZED='1'
+$env:SITE_URL='https://laixian805-tech.github.io/my-blog'
+$env:NEXT_PUBLIC_LAST_UPDATED='2026-03-19'
+yarn build
+```
+
+### 4. 检查导出产物里资源路径
+
+看：
+
+- `out/index.html`
+- `out/blog/index.html`
+- `out/projects/index.html`
+
+重点搜：
+
+```text
+/my-blog/_next/
+/my-blog/static/
+```
+
+### 5. 检查 GitHub Actions
+
+去：
+
+```text
+GitHub 仓库 -> Actions
+```
+
+重点看：
+
+- `build`
+- `upload-pages-artifact`
+- `deploy`
+
+## 十一、如果以后真出故障，我给自己的固定排错流程
+
+我后面会严格按这个顺序来，不跳步骤。
+
+1. 先确认最近改了什么
+2. 先本地 `yarn build`
+3. 再本地模拟 GitHub Pages 构建
+4. 再看 Actions
+5. 再看 Pages 设置
+6. 再看路径和静态资源
+7. 最后才看域名和 HTTPS
+
+这套顺序的好处是：
+
+- 不容易乱改配置
+- 不会把“构建问题”和“域名问题”混在一起
+- 不会把“第三方统计问题”误判成“整站挂了”
+
+## 十二、我最该记住的结论
+
+对当前这个仓库来说，GitHub Pages 问题里最常见、也最值得优先记住的根因有 4 个：
+
+1. 本地静态导出其实没过
+2. Actions 虽然跑了，但没有真正部署成功
+3. `BASE_PATH=/my-blog` 被改坏，导致资源路径错位
+4. 自定义域名和 HTTPS 的问题，其实跟页面构建是两层不同的问题
+
+如果以后我只记一句话，我会记这句：
+
+**先判断是“构建层、部署层、路径层”还是“域名层”的问题，再动手改配置。**
+
+## 十三、参考文档
+
+这篇排错手册的判断逻辑，主要参考了这些官方文档：
+
+- [Using custom workflows with GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
+- [Managing a custom domain for your GitHub Pages site](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site)
+- [About custom domains and GitHub Pages](https://docs.github.com/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages)
+- [Verifying your custom domain for GitHub Pages](https://docs.github.com/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages)
+- [Next.js Static Exports](https://nextjs.org/docs/app/guides/static-exports)
+- [Next.js basePath](https://nextjs.org/docs/14/pages/api-reference/config/next-config-js/basePath)

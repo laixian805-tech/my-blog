@@ -31,6 +31,12 @@ const projectsData: Project[] = [
     href: '/blog/github-pages-custom-domain-migration-guide',
   },
   {
+    title: 'GitHub Pages 排错清单',
+    description:
+      '整理当前仓库最常见的 Pages 故障排查路径，覆盖 Actions 失败、Pages 不更新、资源 404、/my-blog 路径问题、自定义域名异常和 HTTPS 不生效。',
+    href: '/blog/github-pages-troubleshooting-checklist',
+  },
+  {
     title: 'FastAPI 学习笔记',
     description:
       '围绕 FastAPI 的定位、分层结构、参数校验和接口开发思路整理的入门型文章，适合作为后端学习起点。',
