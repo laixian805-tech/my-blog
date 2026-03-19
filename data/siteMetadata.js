@@ -26,7 +26,7 @@ const siteMetadata = {
   siteStatus: {
     fallbackUv: 730,
     fallbackPv: 1460,
-    lastUpdated: process.env.NEXT_PUBLIC_LAST_UPDATED || '2026-03-17',
+    lastUpdated: process.env.NEXT_PUBLIC_LAST_UPDATED || '2026-03-19',
   },
 }
 

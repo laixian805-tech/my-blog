@@ -2,6 +2,7 @@ import Image from '@/components/Image'
 import Link from '@/components/Link'
 import HomeSiteStats from '@/components/HomeSiteStats'
 import siteMetadata from '@/data/siteMetadata'
+import { getLastUpdated } from '@/lib/getLastUpdated'
 
 interface HomeProfileHeroProps {
   totalPosts: number
@@ -18,6 +19,11 @@ export default function HomeProfileHero({
   securityPostCount,
   className = '',
 }: HomeProfileHeroProps) {
+  const siteStatus = {
+    ...siteMetadata.siteStatus,
+    lastUpdated: getLastUpdated(),
+  }
+
   return (
     <div className={`pt-6 pb-10 ${className}`}>
       <div className="grid gap-8 rounded-[36px] border border-slate-200 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(241,245,249,0.92))] p-6 shadow-[0_30px_80px_-48px_rgba(15,23,42,0.65)] sm:p-8 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] lg:items-center dark:border-gray-800 dark:bg-[linear-gradient(135deg,rgba(3,7,18,0.98),rgba(15,23,42,0.94))]">
@@ -67,7 +73,7 @@ export default function HomeProfileHero({
               blogPostCount={blogPostCount}
               securityPostCount={securityPostCount}
               siteStartDate={SITE_START_DATE}
-              siteStatus={siteMetadata.siteStatus}
+              siteStatus={siteStatus}
             />
           </div>
         </div>

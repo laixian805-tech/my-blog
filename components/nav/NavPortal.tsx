@@ -8,6 +8,41 @@ import Link from '@/components/Link'
 import { PortalCategory, PortalLink, portalCategories, portalLinks } from '@/data/portalData'
 import { PortalGlyph } from './PortalIcons'
 
+function getCategoryAccentClasses(categoryId: string, active: boolean) {
+  const toneMap = {
+    all: active
+      ? 'bg-sky-100 text-sky-600 ring-1 ring-sky-200 dark:bg-sky-500/20 dark:text-sky-200 dark:ring-sky-500/30'
+      : 'bg-sky-50 text-sky-600 ring-1 ring-sky-100 dark:bg-sky-500/12 dark:text-sky-300 dark:ring-sky-500/20',
+    algorithm: active
+      ? 'bg-violet-100 text-violet-600 ring-1 ring-violet-200 dark:bg-violet-500/20 dark:text-violet-200 dark:ring-violet-500/30'
+      : 'bg-violet-50 text-violet-600 ring-1 ring-violet-100 dark:bg-violet-500/12 dark:text-violet-300 dark:ring-violet-500/20',
+    backend: active
+      ? 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-200 dark:ring-emerald-500/30'
+      : 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-500/12 dark:text-emerald-300 dark:ring-emerald-500/20',
+    ai: active
+      ? 'bg-fuchsia-100 text-fuchsia-600 ring-1 ring-fuchsia-200 dark:bg-fuchsia-500/20 dark:text-fuchsia-200 dark:ring-fuchsia-500/30'
+      : 'bg-fuchsia-50 text-fuchsia-600 ring-1 ring-fuchsia-100 dark:bg-fuchsia-500/12 dark:text-fuchsia-300 dark:ring-fuchsia-500/20',
+    job: active
+      ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/20 dark:text-amber-200 dark:ring-amber-500/30'
+      : 'bg-amber-50 text-amber-700 ring-1 ring-amber-100 dark:bg-amber-500/12 dark:text-amber-300 dark:ring-amber-500/20',
+    security: active
+      ? 'bg-rose-100 text-rose-600 ring-1 ring-rose-200 dark:bg-rose-500/20 dark:text-rose-200 dark:ring-rose-500/30'
+      : 'bg-rose-50 text-rose-600 ring-1 ring-rose-100 dark:bg-rose-500/12 dark:text-rose-300 dark:ring-rose-500/20',
+    community: active
+      ? 'bg-cyan-100 text-cyan-600 ring-1 ring-cyan-200 dark:bg-cyan-500/20 dark:text-cyan-200 dark:ring-cyan-500/30'
+      : 'bg-cyan-50 text-cyan-600 ring-1 ring-cyan-100 dark:bg-cyan-500/12 dark:text-cyan-300 dark:ring-cyan-500/20',
+    tools: active
+      ? 'bg-orange-100 text-orange-600 ring-1 ring-orange-200 dark:bg-orange-500/20 dark:text-orange-200 dark:ring-orange-500/30'
+      : 'bg-orange-50 text-orange-600 ring-1 ring-orange-100 dark:bg-orange-500/12 dark:text-orange-300 dark:ring-orange-500/20',
+  } as const
+
+  return toneMap[categoryId as keyof typeof toneMap] ?? toneMap.all
+}
+
+function getCategoryBadgeClasses(categoryId: string) {
+  return getCategoryAccentClasses(categoryId, false)
+}
+
 function getCategoryLabel(categoryId: string) {
   return portalCategories.find((category) => category.id === categoryId)?.label ?? '未分类'
 }
@@ -44,11 +79,10 @@ function CategoryButton({
     >
       <span className="flex items-center gap-3">
         <span
-          className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
+          className={`flex h-10 w-10 items-center justify-center rounded-2xl ${getCategoryAccentClasses(
+            category.id,
             active
-              ? 'bg-sky-100 text-sky-600 dark:bg-sky-500/20 dark:text-sky-200'
-              : 'bg-slate-100 text-slate-500 dark:bg-gray-800 dark:text-slate-300'
-          }`}
+          )}`}
         >
           <PortalGlyph name={category.icon} className="h-5 w-5" />
         </span>
@@ -107,7 +141,11 @@ function PortalCard({ link, showCategoryLabel }: { link: PortalLink; showCategor
             </span>
           </div>
           {showCategoryLabel && (
-            <span className="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:bg-gray-800 dark:text-slate-200">
+            <span
+              className={`mt-3 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${getCategoryBadgeClasses(
+                link.categoryId
+              )}`}
+            >
               {categoryLabel}
             </span>
           )}

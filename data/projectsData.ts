@@ -7,12 +7,6 @@ interface Project {
 
 const projectsData: Project[] = [
   {
-    title: '中文知识博客',
-    description:
-      '基于 Next.js、MDX 和 Tailwind CSS 搭建的个人知识站，用来整理后端、数据库、全栈开发与网络安全学习记录。',
-    href: '/',
-  },
-  {
     title: '个人网站搭建实录',
     description:
       '完整记录这个博客从技术选型、页面改造、搜索与统计接入，到 GitHub Pages 发布和后续稳定性优化的全过程。',
