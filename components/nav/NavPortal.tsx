@@ -1,10 +1,11 @@
 'use client'
 
 import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react'
+import NextImage from 'next/image'
 import { Fragment, useState } from 'react'
-import Image from '@/components/Image'
 import Link from '@/components/Link'
 import { PortalCategory, PortalLink, portalCategories, portalLinks } from '@/data/portalData'
+import siteMetadata from '@/data/siteMetadata'
 import { PortalGlyph } from './PortalIcons'
 
 function getCategoryAccentClasses(categoryId: string, active: boolean) {
@@ -94,6 +95,43 @@ function getDomainLabel(url: string) {
   }
 }
 
+function getPortalAssetBasePath() {
+  if (typeof window === 'undefined') {
+    return process.env.BASE_PATH || ''
+  }
+
+  const sitePath = (() => {
+    try {
+      const pathname = new URL(siteMetadata.siteUrl).pathname.replace(/\/$/, '')
+      return pathname === '/' ? '' : pathname
+    } catch {
+      return ''
+    }
+  })()
+
+  if (sitePath && window.location.pathname.startsWith(sitePath)) {
+    return sitePath
+  }
+
+  return ''
+}
+
+function resolvePortalIconSrc(iconPath?: string) {
+  if (!iconPath) {
+    return null
+  }
+
+  if (
+    /^(?:[a-z]+:)?\/\//i.test(iconPath) ||
+    iconPath.startsWith('data:') ||
+    iconPath.startsWith('blob:')
+  ) {
+    return iconPath
+  }
+
+  return `${getPortalAssetBasePath()}${iconPath}`
+}
+
 function CategoryButton({
   category,
   active,
@@ -141,9 +179,10 @@ function PortalSiteIcon({
   iconPath?: string
   categoryId: string
 }) {
-  const [failed, setFailed] = useState(!iconPath)
+  const resolvedIconSrc = resolvePortalIconSrc(iconPath)
+  const [failed, setFailed] = useState(!resolvedIconSrc)
 
-  if (!iconPath || failed) {
+  if (!resolvedIconSrc || failed) {
     return (
       <div
         className={`flex h-12 w-12 items-center justify-center rounded-2xl text-lg font-bold ${getCategorySiteIconClasses(
@@ -156,11 +195,13 @@ function PortalSiteIcon({
   }
 
   return (
-    <Image
-      src={iconPath}
+    <NextImage
+      src={resolvedIconSrc}
       alt={`${title} 图标`}
       width={48}
       height={48}
+      loading="lazy"
+      decoding="async"
       unoptimized
       className="h-12 w-12 rounded-2xl border border-slate-200 bg-white object-contain p-1.5 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.75)] dark:border-gray-700 dark:bg-gray-900"
       onError={() => setFailed(true)}

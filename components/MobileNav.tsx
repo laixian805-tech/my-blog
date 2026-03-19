@@ -10,28 +10,37 @@ import headerNavLinks from '@/data/headerNavLinks'
 
 const MobileNav = () => {
   const [navShow, setNavShow] = useState(false)
-  const navRef = useRef(null)
+  const navRef = useRef<HTMLElement | null>(null)
 
   const closeNav = () => {
-    enableBodyScroll(navRef.current)
     setNavShow(false)
   }
 
   const onToggleNav = () => {
-    setNavShow((status) => {
-      if (status) {
-        enableBodyScroll(navRef.current)
-      } else {
-        // Prevent scrolling
-        disableBodyScroll(navRef.current)
-      }
-      return !status
-    })
+    setNavShow((status) => !status)
   }
 
   useEffect(() => {
+    const navElement = navRef.current
+
+    if (!navElement) {
+      return
+    }
+
+    if (navShow) {
+      disableBodyScroll(navElement)
+    } else {
+      enableBodyScroll(navElement)
+    }
+
+    return () => {
+      enableBodyScroll(navElement)
+    }
+  }, [navShow])
+
+  useEffect(() => {
     return clearAllBodyScrollLocks
-  })
+  }, [])
 
   return (
     <>

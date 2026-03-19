@@ -6,13 +6,14 @@ import ListLayout from '@/layouts/ListLayout'
 const POSTS_PER_PAGE = 5
 
 export const generateStaticParams = async () => {
-  const totalPages = Math.ceil(allBlogs.length / POSTS_PER_PAGE)
+  const publishedBlogs = allBlogs.filter((post) => !post.draft)
+  const totalPages = Math.ceil(publishedBlogs.length / POSTS_PER_PAGE)
   return Array.from({ length: totalPages }, (_, index) => ({ page: (index + 1).toString() }))
 }
 
 export default async function BlogPage(props: { params: Promise<{ page: string }> }) {
   const params = await props.params
-  const posts = allCoreContent(sortPosts(allBlogs))
+  const posts = allCoreContent(sortPosts(allBlogs.filter((post) => !post.draft)))
   const pageNumber = Number.parseInt(params.page, 10)
   const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE)
 

@@ -62,6 +62,7 @@ export const portalLinks: PortalLink[] = [
     url: 'https://www.shixiseng.com/',
     description: '实习与校招岗位聚合，适合集中筛选投递。',
     categoryId: 'job',
+    iconPath: '/static/nav-icons/shixiseng.ico',
     keywords: ['实习', '校招', '找工作', '岗位'],
   },
   {
@@ -142,6 +143,7 @@ export const portalLinks: PortalLink[] = [
     url: 'https://www.lintcode.com/',
     description: '补充题源和专题训练，适合拓展不同题型。',
     categoryId: 'algorithm',
+    iconPath: '/static/nav-icons/lintcode.ico',
     keywords: ['LintCode', '算法题', '训练'],
   },
   {
