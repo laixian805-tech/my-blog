@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useId, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { withSitePath } from '@/lib/sitePath'
 
 interface SiteSearchFormProps {
   compact?: boolean
@@ -30,6 +31,7 @@ export default function SiteSearchForm({
   const formClassName = compact
     ? 'flex w-full items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 shadow-sm transition focus-within:border-sky-300 focus-within:ring-2 focus-within:ring-sky-100 dark:border-gray-800 dark:bg-gray-950 dark:focus-within:border-sky-500 dark:focus-within:ring-sky-500/20'
     : 'flex w-full items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2.5 shadow-sm transition focus-within:border-sky-300 focus-within:ring-2 focus-within:ring-sky-100 dark:border-gray-800 dark:bg-gray-950 dark:focus-within:border-sky-500 dark:focus-within:ring-sky-500/20'
+  const searchAction = withSitePath('/search')
 
   const submit = (_event: FormEvent<HTMLFormElement>) => {
     onSubmit?.()
@@ -37,7 +39,7 @@ export default function SiteSearchForm({
 
   return (
     <form
-      action="/search"
+      action={searchAction}
       method="get"
       className={`${formClassName} ${className}`}
       onSubmit={submit}

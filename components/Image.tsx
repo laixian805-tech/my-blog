@@ -1,9 +1,9 @@
 import NextImage, { ImageProps } from 'next/image'
+import { withSitePath } from '@/lib/sitePath'
 
-const basePath = process.env.BASE_PATH
-
-const Image = ({ src, ...rest }: ImageProps) => (
-  <NextImage src={`${basePath || ''}${src}`} {...rest} />
-)
+const Image = ({ src, ...rest }: ImageProps) => {
+  const resolvedSrc = typeof src === 'string' ? withSitePath(src) : src
+  return <NextImage src={resolvedSrc} {...rest} />
+}
 
 export default Image

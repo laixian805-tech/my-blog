@@ -1,3 +1,5 @@
+import { withSitePath } from '@/lib/sitePath'
+
 interface StaticSiteSearchFormProps {
   compact?: boolean
   placeholder?: string
@@ -14,9 +16,10 @@ export default function StaticSiteSearchForm({
   const formClassName = compact
     ? 'flex w-full items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 shadow-sm transition dark:border-gray-800 dark:bg-gray-950'
     : 'flex w-full items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2.5 shadow-sm transition dark:border-gray-800 dark:bg-gray-950'
+  const searchAction = withSitePath('/search')
 
   return (
-    <form action="/search" method="get" className={`${formClassName} ${className}`}>
+    <form action={searchAction} method="get" className={`${formClassName} ${className}`}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"

@@ -5,7 +5,7 @@ import NextImage from 'next/image'
 import { Fragment, useState } from 'react'
 import Link from '@/components/Link'
 import { PortalCategory, PortalLink, portalCategories, portalLinks } from '@/data/portalData'
-import siteMetadata from '@/data/siteMetadata'
+import { withSitePath } from '@/lib/sitePath'
 import { PortalGlyph } from './PortalIcons'
 
 function getCategoryAccentClasses(categoryId: string, active: boolean) {
@@ -95,43 +95,6 @@ function getDomainLabel(url: string) {
   }
 }
 
-function getPortalAssetBasePath() {
-  if (typeof window === 'undefined') {
-    return process.env.BASE_PATH || ''
-  }
-
-  const sitePath = (() => {
-    try {
-      const pathname = new URL(siteMetadata.siteUrl).pathname.replace(/\/$/, '')
-      return pathname === '/' ? '' : pathname
-    } catch {
-      return ''
-    }
-  })()
-
-  if (sitePath && window.location.pathname.startsWith(sitePath)) {
-    return sitePath
-  }
-
-  return ''
-}
-
-function resolvePortalIconSrc(iconPath?: string) {
-  if (!iconPath) {
-    return null
-  }
-
-  if (
-    /^(?:[a-z]+:)?\/\//i.test(iconPath) ||
-    iconPath.startsWith('data:') ||
-    iconPath.startsWith('blob:')
-  ) {
-    return iconPath
-  }
-
-  return `${getPortalAssetBasePath()}${iconPath}`
-}
-
 function CategoryButton({
   category,
   active,
@@ -179,7 +142,7 @@ function PortalSiteIcon({
   iconPath?: string
   categoryId: string
 }) {
-  const resolvedIconSrc = resolvePortalIconSrc(iconPath)
+  const resolvedIconSrc = iconPath ? withSitePath(iconPath) : null
   const [failed, setFailed] = useState(!resolvedIconSrc)
 
   if (!resolvedIconSrc || failed) {
