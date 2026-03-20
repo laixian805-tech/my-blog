@@ -6,8 +6,6 @@ const systemSansStyle = {
   fontFamily: 'Inter, Roboto, ui-sans-serif, system-ui, sans-serif',
 }
 
-type SiteStatsSource = 'loading' | 'live' | 'fallback'
-
 type SiteStatusPanelProps = {
   fallbackUv: number
   fallbackPv: number
@@ -42,9 +40,8 @@ export default function SiteStatusPanel({
   fallbackPv,
   lastUpdated,
 }: SiteStatusPanelProps) {
-  const [statsSource, setStatsSource] = useState<SiteStatsSource>('loading')
-  const [uvValue, setUvValue] = useState<string | null>(null)
-  const [pvValue, setPvValue] = useState<string | null>(null)
+  const [uvValue, setUvValue] = useState<string>(() => String(fallbackUv))
+  const [pvValue, setPvValue] = useState<string>(() => String(fallbackPv))
 
   useEffect(() => {
     const scriptId = 'busuanzi-script'
@@ -61,15 +58,15 @@ export default function SiteStatusPanel({
 
       setUvValue(nextUv)
       setPvValue(nextPv)
-      setStatsSource('live')
       return true
     }
 
     const applyFallbackStats = () => {
       setUvValue(String(fallbackUv))
       setPvValue(String(fallbackPv))
-      setStatsSource((current) => (current === 'live' ? current : 'fallback'))
     }
+
+    applyFallbackStats()
 
     const script = document.createElement('script')
     script.id = scriptId
@@ -116,8 +113,8 @@ export default function SiteStatusPanel({
     }
   }, [fallbackPv, fallbackUv])
 
-  const uvText = statsSource === 'loading' || !uvValue ? '同步中' : `${uvValue} 位朋友`
-  const pvText = statsSource === 'loading' || !pvValue ? '同步中' : `${pvValue} 次`
+  const uvText = `${uvValue} 位朋友`
+  const pvText = `${pvValue} 次`
 
   const statusItems = [
     {

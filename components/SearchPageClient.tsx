@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, ReactNode, useDeferredValue, useMemo, useState } from 'react'
+import { Fragment, ReactNode, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { formatDate } from 'pliny/utils/formatDate'
 import Link from '@/components/Link'
@@ -334,6 +334,10 @@ export default function SearchPageClient({ blogIndex, securityIndex }: SearchPag
   const query = searchParams.get('q')?.trim() ?? ''
   const deferredKeyword = useDeferredValue(query)
   const [activeTab, setActiveTab] = useState<SearchTab>('all')
+
+  useEffect(() => {
+    setActiveTab('all')
+  }, [query])
 
   const blogResults = useMemo(
     () => buildResults(blogIndex, deferredKeyword),
