@@ -3,12 +3,15 @@
   "version": "2.4.0",
   "private": true,
   "scripts": {
-    "start": "next dev",
+    "start": "next start",
     "dev": "next dev",
     "build": "next build && cross-env NODE_OPTIONS=--experimental-json-modules node ./scripts/postbuild.mjs",
     "serve": "next start",
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "next lint --fix --dir pages --dir app --dir components --dir lib --dir layouts --dir scripts",
+    "test": "yarn test:smoke",
+    "test:smoke": "cross-env EXPORT=1 BASE_PATH=/my-blog UNOPTIMIZED=1 SITE_URL=https://laixian805-tech.github.io/my-blog NEXT_PUBLIC_LAST_UPDATED=2026-03-20 yarn build && yarn test:smoke:built",
+    "test:smoke:built": "node --test tests/smoke/static-export.test.mjs",
     "prepare": "husky"
   },
   "dependencies": {

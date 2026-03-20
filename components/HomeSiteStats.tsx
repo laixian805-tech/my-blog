@@ -9,6 +9,7 @@ interface HomeSiteStatsProps {
     fallbackUv: number
     fallbackPv: number
     lastUpdated: string
+    enableLiveStats: boolean
   }
 }
 
@@ -20,11 +21,13 @@ function calculateSiteAgeDays(siteStartDate: string) {
   const start = new Date(siteStartDate)
   const now = new Date()
   const diffMs = now.getTime() - start.getTime()
+
   return Math.max(1, Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1)
 }
 
 function calculatePercentage(value: number, total: number) {
   if (!total) return 0
+
   return Math.round((value / total) * 100)
 }
 
@@ -97,7 +100,7 @@ export default function HomeSiteStats({
         <StatCard label="总文章数" value={`${totalPosts}`} hint="公开内容总量" />
         <StatCard label="博客文章" value={`${blogPostCount}`} hint="技术与开发笔记" />
         <StatCard label="网安笔记" value={`${securityPostCount}`} hint="靶场与安全学习记录" />
-        <StatCard label="建站天数" value={`${siteAgeDays}`} hint="从首篇公开文章开始" />
+        <StatCard label="建站天数" value={`${siteAgeDays}`} hint="从首篇公开文章开始计算" />
       </div>
 
       <div className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.92fr)]">
@@ -133,6 +136,7 @@ export default function HomeSiteStats({
           fallbackUv={siteStatus.fallbackUv}
           fallbackPv={siteStatus.fallbackPv}
           lastUpdated={siteStatus.lastUpdated}
+          enableLiveStats={siteStatus.enableLiveStats}
         />
       </div>
     </div>

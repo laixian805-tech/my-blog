@@ -1,5 +1,5 @@
 import { defineDocumentType, ComputedFields, makeSource } from 'contentlayer2/source-files'
-import { writeFileSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
 import readingTime from 'reading-time'
 import path from 'path'
 import { fromHtmlIsomorphic } from 'hast-util-from-html-isomorphic'
@@ -23,6 +23,7 @@ import rehypePrismPlus from 'rehype-prism-plus'
 import rehypePresetMinify from 'rehype-preset-minify'
 import siteMetadata from './data/siteMetadata'
 import { allCoreContent, sortPosts } from 'pliny/utils/contentlayer.js'
+import { buildSearchIndexPayload } from './lib/search-index'
 
 const root = process.cwd()
 
@@ -56,6 +57,8 @@ const computedFields: ComputedFields = {
   toc: { type: 'json', resolve: (doc) => extractTocHeadings(doc.body.raw) },
 }
 
+const searchIndexOutputPath = path.join(root, 'public', 'search-index.json')
+
 const createContentFields = () =>
   ({
     title: { type: 'string', required: true },
@@ -71,17 +74,37 @@ const createContentFields = () =>
     canonicalUrl: { type: 'string' },
   }) as const
 
-function createSearchIndex(allBlogs) {
+function writeGeneratedFile(filePath: string, nextContent: string) {
+  const previousContent = existsSync(filePath) ? readFileSync(filePath, 'utf8') : ''
+
+  if (previousContent === nextContent) {
+    return
+  }
+
+  writeFileSync(filePath, nextContent)
+}
+
+function createKbarSearchIndex(allBlogs) {
   if (
     siteMetadata?.search?.provider === 'kbar' &&
     siteMetadata.search.kbarConfig.searchDocumentsPath
   ) {
-    writeFileSync(
+    writeGeneratedFile(
       `public/${path.basename(siteMetadata.search.kbarConfig.searchDocumentsPath)}`,
       JSON.stringify(allCoreContent(sortPosts(allBlogs)))
     )
     console.log('Local search index generated...')
   }
+}
+
+function createStaticSearchIndex(allBlogs, allSecurityNotes) {
+  const payload = buildSearchIndexPayload({
+    blogItems: sortPosts(allBlogs.filter((post) => !post.draft)),
+    securityItems: sortPosts(allSecurityNotes.filter((post) => !post.draft)),
+  })
+
+  writeGeneratedFile(searchIndexOutputPath, JSON.stringify(payload))
+  console.log('Static search index generated...')
 }
 
 export const Blog = defineDocumentType(() => ({
@@ -182,7 +205,11 @@ export default makeSource({
     ],
   },
   onSuccess: async (importData) => {
-    const { allBlogs } = await importData()
-    createSearchIndex(allBlogs)
+    const { allBlogs, allSecurityNotes } = await importData()
+    const publishedBlogs = allBlogs.filter((post) => !post.draft)
+    const publishedSecurityNotes = allSecurityNotes.filter((post) => !post.draft)
+
+    createKbarSearchIndex(publishedBlogs)
+    createStaticSearchIndex(publishedBlogs, publishedSecurityNotes)
   },
 })

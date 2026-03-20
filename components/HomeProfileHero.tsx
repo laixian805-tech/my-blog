@@ -2,7 +2,6 @@ import Image from '@/components/Image'
 import Link from '@/components/Link'
 import HomeSiteStats from '@/components/HomeSiteStats'
 import siteMetadata from '@/data/siteMetadata'
-import { getLastUpdated } from '@/lib/getLastUpdated'
 
 interface HomeProfileHeroProps {
   totalPosts: number
@@ -19,10 +18,7 @@ export default function HomeProfileHero({
   securityPostCount,
   className = '',
 }: HomeProfileHeroProps) {
-  const siteStatus = {
-    ...siteMetadata.siteStatus,
-    lastUpdated: getLastUpdated(),
-  }
+  const siteStatus = siteMetadata.siteStatus
 
   return (
     <div className={`pt-6 pb-10 ${className}`}>

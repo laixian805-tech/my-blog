@@ -1,28 +1,17 @@
 'use client'
 
-import { Fragment, ReactNode, useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { Fragment, type ReactNode, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { formatDate } from 'pliny/utils/formatDate'
 import Link from '@/components/Link'
-import SiteSearchForm from '@/components/SiteSearchForm'
 import siteMetadata from '@/data/siteMetadata'
-
-type SearchSection = 'blog' | 'security'
-
-type SearchIndexItem = {
-  title: string
-  summary?: string
-  date: string
-  path: string
-  searchText: string
-  excerptSource: string
-  section: SearchSection
-}
-
-type SearchPageClientProps = {
-  blogIndex: SearchIndexItem[]
-  securityIndex: SearchIndexItem[]
-}
+import {
+  SEARCH_INDEX_PUBLIC_PATH,
+  type SearchIndexItem,
+  type SearchIndexPayload,
+  type SearchSection,
+} from '@/lib/search-index'
+import { withSitePath } from '@/lib/sitePath'
 
 type SearchResultItem = SearchIndexItem & {
   score: number
@@ -30,6 +19,7 @@ type SearchResultItem = SearchIndexItem & {
 }
 
 type SearchTab = 'all' | SearchSection
+type SearchIndexStatus = 'idle' | 'loading' | 'ready' | 'error'
 
 const exampleQueries = ['FastAPI', 'GitHub Pages', 'OWASP', 'VulnHub', 'SQLi']
 
@@ -69,7 +59,11 @@ function countOccurrences(text: string, token: string) {
 
   while (startIndex < text.length) {
     const hitIndex = text.indexOf(token, startIndex)
-    if (hitIndex === -1) break
+
+    if (hitIndex === -1) {
+      break
+    }
+
     count += 1
     startIndex = hitIndex + token.length
   }
@@ -79,6 +73,7 @@ function countOccurrences(text: string, token: string) {
 
 function buildSnippet(source: string, tokens: string[]) {
   const cleanedSource = source.replace(/\s+/g, ' ').trim()
+
   if (!cleanedSource) {
     return ''
   }
@@ -185,6 +180,7 @@ function buildResults(items: SearchIndexItem[], keyword: string) {
   return items
     .map((item) => {
       const score = scoreItem(item, query, tokens)
+
       if (score <= 0) {
         return null
       }
@@ -251,7 +247,7 @@ function EmptyQueryState() {
           从关键词直接找内容
         </h2>
         <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
-          这个搜索页会同时检索 Blog 和 Security 两个内容区，优先匹配标题和摘要，再补充正文命中。
+          这里会同时搜索 Blog 和 Security 两个内容区，优先匹配标题和摘要，再补充正文片段。
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
           {exampleQueries.map((query) => (
@@ -271,9 +267,42 @@ function EmptyQueryState() {
         <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
           <li>优先搜索技术词、框架名、漏洞名、靶场名，例如 `FastAPI`、`OWASP`、`VulnHub`。</li>
           <li>如果关键词较长，可以先缩短成 1 到 3 个核心词，再逐步细化。</li>
-          <li>找不到结果时，试试英文缩写、中文别名，或者去 `Nav`、标签和分类页继续浏览。</li>
+          <li>找不到结果时，可以试试英文写法、中文别名，或者去 `Nav` 页面继续浏览。</li>
         </ul>
       </div>
+    </div>
+  )
+}
+
+function LoadingState() {
+  return (
+    <div className="rounded-[28px] border border-dashed border-slate-300 bg-white px-6 py-10 dark:border-gray-700 dark:bg-gray-950/60">
+      <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        正在加载搜索索引
+      </h2>
+      <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
+        搜索逻辑已经保留不变，这里只是在首次查询时按需加载索引文件。
+      </p>
+    </div>
+  )
+}
+
+function SearchIndexErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="rounded-[28px] border border-dashed border-rose-300 bg-white px-6 py-10 dark:border-rose-900/60 dark:bg-gray-950/60">
+      <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        搜索索引加载失败
+      </h2>
+      <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
+        请检查静态资源是否已经完成构建，或者刷新页面后重试。
+      </p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-5 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-600 dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
+      >
+        重试
+      </button>
     </div>
   )
 }
@@ -282,7 +311,7 @@ function NoResultsState({ query }: { query: string }) {
   return (
     <div className="rounded-[28px] border border-dashed border-slate-300 bg-white px-6 py-10 dark:border-gray-700 dark:bg-gray-950/60">
       <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-        没有找到和“{query}”完全相关的内容
+        没有找到和 “{query}” 完全相关的内容
       </h2>
       <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
         可以试试更短的关键词、英文写法，或者直接从下面这些常用搜索词开始。
@@ -329,23 +358,63 @@ function SearchResultCard({ item, tokens }: { item: SearchResultItem; tokens: st
   )
 }
 
-export default function SearchPageClient({ blogIndex, securityIndex }: SearchPageClientProps) {
+export default function SearchPageClient() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q')?.trim() ?? ''
   const deferredKeyword = useDeferredValue(query)
   const [activeTab, setActiveTab] = useState<SearchTab>('all')
+  const [searchIndex, setSearchIndex] = useState<SearchIndexPayload | null>(null)
+  const [searchIndexStatus, setSearchIndexStatus] = useState<SearchIndexStatus>('idle')
 
   useEffect(() => {
     setActiveTab('all')
   }, [query])
 
+  useEffect(() => {
+    if (!query || searchIndex || searchIndexStatus === 'loading') {
+      return
+    }
+
+    const controller = new AbortController()
+
+    setSearchIndexStatus('loading')
+
+    fetch(withSitePath(SEARCH_INDEX_PUBLIC_PATH), {
+      signal: controller.signal,
+      cache: 'force-cache',
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Search index request failed with status ${response.status}.`)
+        }
+
+        return response.json() as Promise<SearchIndexPayload>
+      })
+      .then((payload) => {
+        setSearchIndex(payload)
+        setSearchIndexStatus('ready')
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) {
+          return
+        }
+
+        console.error('Failed to load search index.', error)
+        setSearchIndexStatus('error')
+      })
+
+    return () => {
+      controller.abort()
+    }
+  }, [query, searchIndex, searchIndexStatus])
+
   const blogResults = useMemo(
-    () => buildResults(blogIndex, deferredKeyword),
-    [blogIndex, deferredKeyword]
+    () => buildResults(searchIndex?.blogIndex ?? [], deferredKeyword),
+    [searchIndex, deferredKeyword]
   )
   const securityResults = useMemo(
-    () => buildResults(securityIndex, deferredKeyword),
-    [securityIndex, deferredKeyword]
+    () => buildResults(searchIndex?.securityIndex ?? [], deferredKeyword),
+    [searchIndex, deferredKeyword]
   )
   const allResults = useMemo(
     () =>
@@ -368,27 +437,17 @@ export default function SearchPageClient({ blogIndex, securityIndex }: SearchPag
 
   const visibleResults =
     activeTab === 'all' ? allResults : activeTab === 'blog' ? blogResults : securityResults
+  const isWaitingForIndex = Boolean(query) && !searchIndex && searchIndexStatus !== 'error'
 
   return (
     <div className="divide-y divide-gray-200 dark:divide-gray-700">
-      <div className="space-y-5 pt-6 pb-8 md:space-y-6">
-        <div className="space-y-3">
-          <h1 className="text-3xl leading-9 font-extrabold tracking-tight text-gray-900 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14 dark:text-gray-100">
-            搜索
-          </h1>
-          <p className="max-w-3xl text-base leading-7 text-gray-500 dark:text-gray-400">
-            静态前端搜索会同时扫描 Blog 和 Security 两个内容区，优先匹配标题与摘要，再补充正文命中。
-          </p>
-        </div>
-
-        <div className="max-w-3xl">
-          <SiteSearchForm placeholder="搜索标题、摘要、正文关键词，例如 FastAPI、OWASP、VulnHub" />
-        </div>
-      </div>
-
       <div className="space-y-8 py-10">
         {!query ? (
           <EmptyQueryState />
+        ) : searchIndexStatus === 'error' ? (
+          <SearchIndexErrorState onRetry={() => setSearchIndexStatus('idle')} />
+        ) : isWaitingForIndex ? (
+          <LoadingState />
         ) : allResults.length === 0 ? (
           <NoResultsState query={query} />
         ) : (

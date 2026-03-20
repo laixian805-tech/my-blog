@@ -7,6 +7,7 @@ import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import SectionContainer from '@/components/SectionContainer'
 import siteMetadata from '@/data/siteMetadata'
+import securityHeadersConfig from '@/lib/securityHeaders'
 import { ThemeProviders } from './theme-providers'
 
 const space_grotesk = Space_Grotesk({
@@ -57,6 +58,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const basePath = process.env.BASE_PATH || ''
+  const shouldEmitStaticSecurityMeta = Boolean(process.env.EXPORT)
 
   return (
     <html
@@ -90,6 +92,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <meta name="msapplication-TileColor" content="#000000" />
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fff" />
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
+      {shouldEmitStaticSecurityMeta && (
+        <meta
+          httpEquiv="Content-Security-Policy"
+          content={securityHeadersConfig.contentSecurityPolicy}
+        />
+      )}
+      <meta name="referrer" content={securityHeadersConfig.referrerPolicy} />
       <link rel="alternate" type="application/rss+xml" href={`${basePath}/feed.xml`} />
       <body className="bg-white pl-[calc(100vw-100%)] text-black antialiased dark:bg-gray-950 dark:text-white">
         <ThemeProviders>

@@ -10,6 +10,7 @@ type SiteStatusPanelProps = {
   fallbackUv: number
   fallbackPv: number
   lastUpdated: string
+  enableLiveStats: boolean
 }
 
 function StatusRow({ label, value, isLast }: { label: string; value: ReactNode; isLast: boolean }) {
@@ -39,11 +40,16 @@ export default function SiteStatusPanel({
   fallbackUv,
   fallbackPv,
   lastUpdated,
+  enableLiveStats,
 }: SiteStatusPanelProps) {
   const [uvValue, setUvValue] = useState<string>(() => String(fallbackUv))
   const [pvValue, setPvValue] = useState<string>(() => String(fallbackPv))
 
   useEffect(() => {
+    if (!enableLiveStats) {
+      return
+    }
+
     const scriptId = 'busuanzi-script'
     const existingScript = document.getElementById(scriptId)
     existingScript?.remove()
@@ -111,7 +117,7 @@ export default function SiteStatusPanel({
       window.clearTimeout(fallbackTimer)
       script.remove()
     }
-  }, [fallbackPv, fallbackUv])
+  }, [enableLiveStats, fallbackPv, fallbackUv])
 
   const uvText = `${uvValue} 位朋友`
   const pvText = `${pvValue} 次`
@@ -141,14 +147,16 @@ export default function SiteStatusPanel({
           />
         ))}
       </div>
-      <div aria-hidden="true" className="hidden">
-        <span id="busuanzi_container_site_uv">
-          <span id="busuanzi_value_site_uv" />
-        </span>
-        <span id="busuanzi_container_site_pv">
-          <span id="busuanzi_value_site_pv" />
-        </span>
-      </div>
+      {enableLiveStats && (
+        <div aria-hidden="true" className="hidden">
+          <span id="busuanzi_container_site_uv">
+            <span id="busuanzi_value_site_uv" />
+          </span>
+          <span id="busuanzi_container_site_pv">
+            <span id="busuanzi_value_site_pv" />
+          </span>
+        </div>
+      )}
     </div>
   )
 }
