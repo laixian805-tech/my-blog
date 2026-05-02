@@ -1,12 +1,13 @@
 import { ReactNode } from 'react'
 import { CoreContent } from 'pliny/utils/contentlayer'
-import type { Authors, Blog, SecurityNote } from 'contentlayer/generated'
+import type { Authors, Blog, CourseNote, SecurityNote, Talk } from 'contentlayer/generated'
 import BlogToc from '@/components/BlogToc'
 import Link from '@/components/Link'
 import PageTitle from '@/components/PageTitle'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 import SectionContainer from '@/components/SectionContainer'
 import siteMetadata from '@/data/siteMetadata'
+import { getPostListLabel } from '@/lib/postPage'
 
 const editUrl = (path: string) => `${siteMetadata.siteRepo}/blob/main/data/${path}`
 
@@ -18,18 +19,18 @@ const postDateTemplate: Intl.DateTimeFormatOptions = {
 }
 
 interface LayoutProps {
-  content: CoreContent<Blog | SecurityNote>
+  content: CoreContent<Blog | SecurityNote | CourseNote | Talk>
   authorDetails: CoreContent<Authors>[]
   next?: { path: string; title: string }
   prev?: { path: string; title: string }
-  toc?: Blog['toc'] | SecurityNote['toc']
+  toc?: Blog['toc'] | SecurityNote['toc'] | CourseNote['toc'] | Talk['toc']
   children: ReactNode
 }
 
 export default function PostLayout({ content, next, prev, toc, children }: LayoutProps) {
   const { filePath, path, date, title } = content
   const basePath = path.split('/')[0]
-  const listLabel = basePath === 'security' ? '返回 Security' : '返回博客列表'
+  const listLabel = getPostListLabel(basePath)
 
   return (
     <SectionContainer>

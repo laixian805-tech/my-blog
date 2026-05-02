@@ -1,0 +1,119 @@
+---
+title: 荣耀实习笔试 4.14
+date: 2026-04-14
+summary: 记录荣耀实习笔试里的三道编程题，保留题意、关键陷阱和参考实现思路。
+tags:
+  - 杂谈
+  - 实习笔试
+  - 荣耀
+authors:
+  - default
+layout: PostLayout
+---
+
+## 第一题：带空白字符的字符串匹配
+
+**题目简述**
+
+给定两行字符串，第一行包含空格或 tab，第二行不包含。要求统计第二行字符串在第一行中出现的次数。
+
+关键点：
+
+- 需要忽略第一行中的所有空白字符
+- 允许重叠匹配，例如 `bbb` 中找 `bb` 结果应为 2
+
+**参考实现**
+
+```python
+import sys
+
+
+def solve_q1():
+    line1 = sys.stdin.readline().strip('\n')
+    line2 = sys.stdin.readline().strip('\n')
+
+    if not line1 or not line2:
+        return
+
+    s1 = "".join(line1.split())
+    s2 = "".join(line2.split())
+    answer = 0
+
+    for index in range(len(s1) - len(s2) + 1):
+        if s1[index : index + len(s2)] == s2:
+            answer += 1
+
+    print(answer)
+
+
+if __name__ == "__main__":
+    solve_q1()
+```
+
+这题本身不难，真正容易丢分的是忽略“去空白”和“可重叠”两个条件。
+
+## 第二题：矩阵最大路径和
+
+**题目简述**
+
+给定一个 `n x m` 的矩阵，从左上角走到右下角，只能向右或向下，求路径元素和的最大值。
+
+难点不在动态规划本身，而在输入格式解析，例如矩阵可能以 `[1 2 3;4 5 6]` 这类形式给出。
+
+**参考实现**
+
+```python
+import sys
+
+
+def solve_q2():
+    lines = [line.strip() for line in sys.stdin.read().strip().split('\n') if line.strip()]
+    if len(lines) < 3:
+        return
+
+    n = int(lines[0])
+    m = int(lines[1])
+    matrix_str = lines[2].replace('[', '').replace(']', '')
+    rows = matrix_str.split(';')
+    grid = [[int(value) for value in row.split()] for row in rows]
+
+    for i in range(n):
+        for j in range(m):
+            if i == 0 and j == 0:
+                continue
+            if i == 0:
+                grid[i][j] += grid[i][j - 1]
+            elif j == 0:
+                grid[i][j] += grid[i - 1][j]
+            else:
+                grid[i][j] += max(grid[i - 1][j], grid[i][j - 1])
+
+    print(grid[-1][-1])
+
+
+if __name__ == "__main__":
+    solve_q2()
+```
+
+## 第三题：数字字符串添加运算符
+
+**题目简述**
+
+给定纯数字字符串和目标值，在数字之间插入 `+`、`-`、`*`，统计最终表达式结果等于目标值的方案数。
+
+这题属于回溯题，核心陷阱有两个：
+
+- 乘法优先级，遇到 `*` 时要撤销上一步加减带来的累计贡献
+- 前导零，不能切出 `05` 这类非法数字片段
+
+一个比较稳定的做法是维护：
+
+- 当前枚举到的位置 `index`
+- 当前表达式计算值 `cur_sum`
+- 上一个可参与乘法回滚的值 `prev_num`
+
+这样在追加乘法时，就能把之前的 `prev_num` 从总和里减掉，再加上 `prev_num * current` 的结果。
+
+## 复盘
+
+这场笔试的三题很典型：第一题考字符串细节，第二题考输入处理加基础 DP，第三题考回溯与表达式求值。真正拉开差距的不是会不会某个模板，而是能否在读题时第一时间识别“坑点”。

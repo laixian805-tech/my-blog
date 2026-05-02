@@ -18,6 +18,7 @@ interface ArchiveCollectionProps {
   showSectionBadge?: boolean
   pagination?: PaginationProps
   titleSuffix?: ReactNode
+  compactHoverDetails?: boolean
 }
 
 function Pagination({ totalPages, currentPage, basePath }: PaginationProps) {
@@ -31,25 +32,30 @@ function Pagination({ totalPages, currentPage, basePath }: PaginationProps) {
           <Link
             href={currentPage - 1 === 1 ? `${basePath}/` : `${basePath}/page/${currentPage - 1}`}
             rel="prev"
+            className="text-sm font-semibold text-slate-600 hover:text-emerald-700 dark:text-slate-300 dark:hover:text-emerald-300"
           >
             上一页
           </Link>
         ) : (
-          <button className="cursor-auto disabled:opacity-50" disabled>
+          <button className="cursor-auto text-sm text-slate-400 disabled:opacity-50" disabled>
             上一页
           </button>
         )}
 
-        <span className="text-sm text-gray-500 dark:text-gray-400">
+        <span className="text-sm text-slate-500 dark:text-slate-400">
           第 {currentPage} / {totalPages} 页
         </span>
 
         {nextPage ? (
-          <Link href={`${basePath}/page/${currentPage + 1}`} rel="next">
+          <Link
+            href={`${basePath}/page/${currentPage + 1}`}
+            rel="next"
+            className="text-sm font-semibold text-slate-600 hover:text-emerald-700 dark:text-slate-300 dark:hover:text-emerald-300"
+          >
             下一页
           </Link>
         ) : (
-          <button className="cursor-auto disabled:opacity-50" disabled>
+          <button className="cursor-auto text-sm text-slate-400 disabled:opacity-50" disabled>
             下一页
           </button>
         )}
@@ -60,32 +66,23 @@ function Pagination({ totalPages, currentPage, basePath }: PaginationProps) {
 
 export default function ArchiveCollection({
   title,
-  description,
-  eyebrow = 'Archive',
   items,
   emptyMessage,
   showSectionBadge = false,
   pagination,
   titleSuffix,
+  compactHoverDetails = false,
 }: ArchiveCollectionProps) {
   const groupedItems = groupArchiveItems(items)
 
   return (
     <>
       <div className="space-y-8 pt-6 pb-10">
-        <div className="rounded-[32px] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(240,253,250,0.94))] px-6 py-7 shadow-[0_20px_48px_-38px_rgba(15,23,42,0.62)] dark:border-gray-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.96),rgba(6,23,23,0.98))]">
-          <p className="text-xs font-semibold tracking-[0.24em] text-emerald-700 uppercase dark:text-emerald-300">
-            {eyebrow}
-          </p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl dark:text-slate-100">
+        <div className="flex items-end justify-between gap-4">
+          <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl dark:text-slate-100">
             {title}
           </h1>
-          {description && (
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 dark:text-slate-300">
-              {description}
-            </p>
-          )}
-          {titleSuffix && <div className="mt-4">{titleSuffix}</div>}
+          {titleSuffix && <div>{titleSuffix}</div>}
         </div>
 
         {!items.length ? (
@@ -94,24 +91,29 @@ export default function ArchiveCollection({
           </div>
         ) : (
           groupedItems.map((group) => (
-            <section key={group.label} className="grid gap-5 lg:grid-cols-[120px_minmax(0,1fr)]">
-              <div className="lg:pt-4">
-                <div className="sticky top-24 rounded-[24px] border border-slate-200 bg-white/90 px-4 py-4 text-center shadow-sm dark:border-gray-800 dark:bg-slate-950/82">
-                  <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
-                    Group
-                  </p>
-                  <p className="mt-2 text-2xl font-black tracking-tight text-slate-950 dark:text-slate-100">
+            <section
+              key={group.label}
+              className="grid gap-4 border-t border-slate-200/80 pt-6 lg:grid-cols-[84px_minmax(0,1fr)] dark:border-gray-800"
+            >
+              <div className="lg:pt-1">
+                <div className="sticky top-24 text-left lg:text-right">
+                  <p className="text-[12px] font-semibold tracking-[0.16em] text-slate-400 uppercase dark:text-slate-500">
                     {group.label}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                     {group.items.length} 条
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {group.items.map((item) => (
-                  <ArchiveCard key={item.id} item={item} showSectionBadge={showSectionBadge} />
+                  <ArchiveCard
+                    key={item.id}
+                    item={item}
+                    showSectionBadge={showSectionBadge}
+                    compactHoverDetails={compactHoverDetails}
+                  />
                 ))}
               </div>
             </section>

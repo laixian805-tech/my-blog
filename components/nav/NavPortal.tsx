@@ -214,7 +214,7 @@ function PortalCard({ link, showCategoryLabel }: { link: PortalLink; showCategor
   return (
     <Link
       href={link.url}
-      className="group flex h-full flex-col rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_12px_35px_-24px_rgba(15,23,42,0.7)] transition duration-200 hover:-translate-y-1 hover:border-sky-300 hover:shadow-[0_25px_50px_-25px_rgba(14,165,233,0.45)] dark:border-gray-800 dark:bg-gray-900 dark:hover:border-sky-500/70"
+      className="card-shell card-shell-interactive group flex h-full flex-col rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_12px_35px_-24px_rgba(15,23,42,0.7)] hover:border-sky-300 hover:shadow-[0_25px_50px_-25px_rgba(14,165,233,0.45)] dark:border-gray-800 dark:bg-gray-900 dark:hover:border-sky-500/70"
       aria-label={`打开 ${link.title}`}
     >
       <div className="flex items-start gap-4">
@@ -222,7 +222,7 @@ function PortalCard({ link, showCategoryLabel }: { link: PortalLink; showCategor
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+              <h3 className="card-shell-title truncate text-base font-semibold text-slate-900 dark:text-slate-100">
                 {link.title}
               </h3>
               <p className="mt-1 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
@@ -319,7 +319,7 @@ export default function NavPortal({ initialCategoryId = 'all' }: { initialCatego
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
           <aside className="hidden lg:block">
-            <div className="sticky top-24 rounded-[28px] border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950/85">
+            <div className="card-shell card-shell-static sticky top-24 rounded-[28px] border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950/85">
               <div className="mb-4 px-1">
                 <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
                   Categories
@@ -333,7 +333,7 @@ export default function NavPortal({ initialCategoryId = 'all' }: { initialCatego
           </aside>
 
           <section className="min-w-0">
-            <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/85">
+            <div className="card-shell card-shell-static rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/85">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">

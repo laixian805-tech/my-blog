@@ -2,10 +2,8 @@
 
 import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react'
 import { disableBodyScroll, enableBodyScroll, clearAllBodyScrollLocks } from 'body-scroll-lock'
-import { Fragment, Suspense, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import Link from './Link'
-import SiteSearchForm from './SiteSearchForm'
-import StaticSiteSearchForm from './StaticSiteSearchForm'
 import headerNavLinks from '@/data/headerNavLinks'
 
 const MobileNav = () => {
@@ -88,13 +86,6 @@ const MobileNav = () => {
                 ref={navRef}
                 className="mt-8 flex h-full basis-0 flex-col items-start overflow-y-auto px-6 pt-2 pb-10 text-left"
               >
-                <div className="mb-8 w-full max-w-sm pr-10">
-                  <Suspense
-                    fallback={<StaticSiteSearchForm compact placeholder="搜索博客和网安笔记" />}
-                  >
-                    <SiteSearchForm compact placeholder="搜索博客和网安笔记" onSubmit={closeNav} />
-                  </Suspense>
-                </div>
                 {headerNavLinks.map((link) => (
                   <Link
                     key={link.title}

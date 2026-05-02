@@ -1,0 +1,108 @@
+---
+title: 椭圆曲线签名实验说明
+date: 2026-04-13
+summary: 用 Python 手动实现椭圆曲线签名实验，覆盖有限域、点运算、公钥体系与验签流程。
+tags:
+  - 课程学习
+  - 区块链
+  - 密码学
+authors:
+  - default
+layout: PostLayout
+---
+
+## 实验目的
+
+本实验通过 Python 手动实现椭圆曲线密码学中的关键步骤，让使用者理解数字签名并不是“黑盒调用库”，而是建立在有限域运算、椭圆曲线点运算和离散对数困难问题之上的。
+
+这个实验主要想说明三件事：
+
+1. 有限域中的加减乘除可以支撑椭圆曲线密码学运算。
+2. 椭圆曲线上的点加法、点倍乘可以构成公钥密码体制。
+3. 椭圆曲线数字签名可以用于验证消息确实由私钥持有者发出。
+
+## 项目主要文件
+
+- `FieldElement.py`：有限域元素类，实现模素数域中的加减乘除和幂运算。
+- `EllipticCurves.py`：椭圆曲线点运算、secp256k1 参数、签名验证逻辑。
+- `EllipticCurveswindow.py`：图形界面，用于消息签名和验签演示。
+- `README.md`：实验原理说明。
+- `test_elliptic_curve_project.py`：自动化测试。
+
+## 快速启动
+
+### 安装依赖
+
+图形界面主要使用 Python 标准库中的 `tkinter`；如果需要运行测试，再额外安装 `pytest` 即可。
+
+```powershell
+cd "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\EllipticCurve-Signature(1)\EllipticCurve-Signature-main"
+& "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\.venv_tlx\Scripts\python.exe" -m pip install pytest
+```
+
+### 启动 GUI
+
+```powershell
+& "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\.venv_tlx\Scripts\python.exe" "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\EllipticCurve-Signature(1)\EllipticCurve-Signature-main\EllipticCurveswindow.py"
+```
+
+### 运行测试
+
+```powershell
+& "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\.venv_tlx\Scripts\python.exe" -m pytest "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\EllipticCurve-Signature(1)\EllipticCurve-Signature-main\test_elliptic_curve_project.py" -q
+```
+
+## 实验主要在做什么
+
+### 第一层：有限域运算
+
+项目先实现 `FieldElement`，支持：
+
+- 加法
+- 减法
+- 乘法
+- 幂运算
+- 除法
+- 常量与域元素相乘
+
+这意味着椭圆曲线坐标不再是普通整数，而是有限域中的数。
+
+### 第二层：椭圆曲线点运算
+
+`EllipticCurves.py` 中实现了 `EllipticPoint`，核心包括：
+
+- 判断一个点是否在曲线上
+- 点与点相加
+- 点倍加
+- 二进制展开下的快速标量乘法
+
+### 第三层：secp256k1 参数
+
+项目定义了比特币常用的 secp256k1 参数体系，包括：
+
+- `A = 0`
+- `B = 7`
+- 有限域素数 `P = 2^256 - 2^32 - 977`
+- 群阶 `N`
+- 基点 `G`
+
+### 第四层：签名与验签
+
+验签逻辑的基本流程是：
+
+1. 对消息做 `SHA-256` 得到摘要 `z`
+2. 由私钥生成公钥 `P = eG`
+3. 选择随机数 `k` 并计算 `R = kG`
+4. 取 `R` 的横坐标得到 `r`
+5. 计算签名中的 `s`
+6. 使用公钥、消息和 `(r, s)` 验证签名是否有效
+
+### 第五层：图形界面演示
+
+GUI 支持输入消息、输入私钥、自动生成签名、显示公钥并执行验签，因此这个实验同时具备算法实现和交互展示两层价值。
+
+## 展示亮点
+
+1. 把抽象密码学原理真正落实成可运行代码。
+2. 不是只调用现成库，而是手动实现了关键数学过程。
+3. 既能讲原理，也能现场演示签名与验签效果。

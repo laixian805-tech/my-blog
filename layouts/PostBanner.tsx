@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 import Bleed from 'pliny/ui/Bleed'
 import { CoreContent } from 'pliny/utils/contentlayer'
-import type { Blog, SecurityNote } from 'contentlayer/generated'
+import type { Blog, CourseNote, SecurityNote, Talk } from 'contentlayer/generated'
 import Image from '@/components/Image'
 import Link from '@/components/Link'
 import PageTitle from '@/components/PageTitle'
@@ -9,11 +9,11 @@ import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 import SectionContainer from '@/components/SectionContainer'
 
 interface LayoutProps {
-  content: CoreContent<Blog | SecurityNote>
+  content: CoreContent<Blog | SecurityNote | CourseNote | Talk>
   children: ReactNode
   next?: { path: string; title: string }
   prev?: { path: string; title: string }
-  toc?: Blog['toc'] | SecurityNote['toc']
+  toc?: Blog['toc'] | SecurityNote['toc'] | CourseNote['toc'] | Talk['toc']
 }
 
 export default function PostBanner({ content, next, prev, children }: LayoutProps) {

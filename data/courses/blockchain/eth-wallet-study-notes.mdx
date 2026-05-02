@@ -1,0 +1,101 @@
+---
+title: ETH 钱包实验说明
+date: 2026-04-11
+summary: 记录基于 Python、Tkinter 和 web3.py 的以太坊钱包实验，重点补充私钥保护与账户推导优化。
+tags:
+  - 课程学习
+  - 区块链
+  - Ethereum
+authors:
+  - default
+layout: PostLayout
+---
+
+## 项目简介
+
+本项目是一个基于 Python、`Tkinter` 和 `web3.py` 的简易以太坊钱包原型，支持：
+
+- 创建以太坊账户
+- 显示账户地址与余额
+- 输入私钥或短密码登录
+- 发起 ETH 转账
+- 查询交易回执并导出交易记录
+
+这次改进重点不是重写整个钱包，而是在老师提供的源码基础上增强本地私钥保护，并补充椭圆曲线账户推导优化，让项目在安全性和工程规范性上更完整。
+
+## 运行环境与启动方式
+
+建议环境：
+
+- Windows
+- PowerShell
+- Python 3.13 或 3.14
+- 使用工作区根目录下的 `.venv_tlx`
+
+> `ETH_Wallet(1)\.venv` 来自旧机器，内部记录了失效 Python 路径，不建议继续使用。
+
+### 安装依赖
+
+```powershell
+cd "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\ETH_Wallet(1)"
+& "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\.venv_tlx\Scripts\python.exe" -m pip install -r requirements.txt
+```
+
+### 快速启动
+
+```powershell
+& "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\.venv_tlx\Scripts\python.exe" "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\ETH_Wallet(1)\ETH_Wallet.py"
+```
+
+### 运行自动化测试
+
+```powershell
+& "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\.venv_tlx\Scripts\python.exe" -m pytest "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\ETH_Wallet(1)\test_wallet_project.py" -q
+```
+
+当前结果应类似：
+
+```text
+15 passed, 1 warning
+```
+
+其中 `websockets.legacy` 的 warning 是弃用提醒，不是功能错误。
+
+## 项目主要功能
+
+### 账户创建
+
+`CreateWalletWindow` 负责创建新账户。程序会调用 `web3.eth.account.create()` 生成：
+
+- 账户地址
+- 私钥
+- 助记词
+- 二维码
+
+为了避免“二维码扫不出来就拿不到信息”的问题，当前版本额外做了两件事：
+
+- 创建成功后直接在界面显示地址、私钥和助记词文本
+- 自动把这三项信息保存到 `wallet_exports/` 目录下
+
+### 账户登录
+
+项目支持用私钥或短密码进入钱包界面，适合教学展示“账户恢复”和“本地保护”两个概念。
+
+### 转账与回执
+
+用户可以发起 ETH 转账，查看交易状态，并导出交易记录，形成从账户创建到交易完成的一条完整链路。
+
+## 本次改进的重点
+
+1. 强化本地私钥保护逻辑，而不是把私钥明文散落在流程里。
+2. 补充椭圆曲线账户推导相关逻辑，说明钱包地址和密钥不是凭空生成的黑盒结果。
+3. 明确区分可用虚拟环境与失效虚拟环境，减少演示时的环境性报错。
+
+## 展示建议
+
+如果要做课程答辩，可以按这个顺序展开：
+
+1. 先展示如何创建新账户。
+2. 再展示地址、私钥、助记词和导出结果。
+3. 然后演示登录、查余额、转账和回执查询。
+4. 最后说明改进点落在私钥保护与账户推导，而不是只做界面功能。

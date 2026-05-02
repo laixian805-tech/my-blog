@@ -1,0 +1,535 @@
+---
+title: 'FastAPI 博客全栈项目笔记：从用户、文章到管理员系统的完整拆解'
+date: '2026-03-13'
+tags: ['项目', 'FastAPI', 'Vue', '全栈']
+draft: false
+summary: '围绕一个带用户、文章和管理员能力的前后端分离博客系统，按模块、链路和角色把完整项目拆开看懂。'
+authors: ['default']
+layout: PostLayout
+---
+# FastAPI 博客全栈项目笔记：从用户、文章到管理员系统的完整拆解
+
+先给你 5 个第一次出现的关键词解释，后面我们就直接用：
+
+- FastAPI（新手提示：Python 写后端接口的框架）
+- Vue 3（新手提示：写前端页面的框架）
+- Vite（新手提示：前端开发服务器和打包工具）
+- SQLAlchemy（新手提示：Python 操作数据库的工具）
+- JWT（新手提示：登录后发给前端的身份令牌）
+
+**第 1 部分：先用人话讲清项目**
+
+- **1）这个项目是干什么的**：这是一个“带用户系统、文章系统、管理员系统”的全栈博客站点。游客能看文章和作者，普通用户能注册、登录、发文章、改自己的资料，管理员还能管理用户、启停账号、看审计日志。依据：app/routers/auth.py:19、app/routers/articles.py:22、app/routers/users.py:24、frontend/src/router/index.ts:17
+
+- **2）它属于什么类型**：它是一个**全栈 Web 项目**，而且是“单仓库、前后端分离”的结构：后端 API 在 app/，前端单页应用在 frontend/，数据库用本地 SQLite 文件。它不是微服务，也不是 SDK。依据：app/main.py:27、frontend/src/main.ts:6、app/config.py:35
+
+- **3）核心业务流程**：最核心是三条线：注册/登录 -> 进入系统、创建/查看/编辑/删除文章、管理员管理用户并记录审计日志。依据：tests/test_api.py:68、tests/test_api.py:96、tests/test_api.py:250
+
+- 4）如果把它比作现实系统
+
+  ：
+
+  - 前端像“门厅 + 操作台”，负责让用户点按钮、填表、看结果。依据：frontend/src/pages/LoginPage.vue:1、frontend/src/pages/ArticleEditorPage.vue:1
+  - 后端路由像“前台接待”，负责接请求、验参数、分发任务。依据：app/routers/auth.py:16、app/routers/articles.py:19
+  - deps.py 像“门禁和保安”，负责判断你是不是登录用户、是不是管理员。依据：app/deps.py:25、app/deps.py:70
+  - crud/ 像“业务柜台 + 数据员”，负责查库、写库、拼数据。依据：app/crud/user.py:159、app/crud/article.py:8
+  - 数据库像“档案室”，保存用户、文章、注销令牌、管理员操作记录。依据：app/models.py:38、app/models.py:69、app/models.py:85、app/models.py:97
+
+**第 2 部分：项目全貌总览**
+
+- 1）项目地图
+
+  ：
+
+  - 后端应用层：app/main.py、app/routers/*
+  - 后端基础设施层：app/config.py、app/database.py、app/security.py、app/deps.py
+  - 后端数据层：app/models.py、app/crud/*、app/schemas.py
+  - 前端应用层：frontend/src/pages/*、frontend/src/router/index.ts
+  - 前端基础层：frontend/src/api/client.ts、frontend/src/state/auth.ts、frontend/src/ui/messages.ts
+  - 支撑模块：tests/*、alembic/*、.env.example
+
+- 2）每个模块职责
+
+  ：
+
+  - routers：对外暴露 API
+  - deps：鉴权、权限、会话注入
+  - crud：数据库访问和部分业务逻辑
+  - models：数据库表结构
+  - schemas：接口输入输出格式
+  - pages：页面级功能
+  - api/client.ts：前端统一请求出口
+  - state/auth.ts：登录状态缓存
+
+- **3）模块怎么协作**：最核心的一条请求链是：页面 -> api/client -> 后端 router -> deps -> crud -> models/database -> 返回 JSON -> 页面渲染。依据：frontend/src/api/client.ts:21、app/routers/articles.py:28、app/deps.py:46、app/crud/article.py:13
+
+- 4）核心主链路 vs 支撑模块
+
+  ：
+
+  - 核心主链路：登录、文章 CRUD、管理员用户管理。依据：app/routers/auth.py:42、app/routers/articles.py:22、app/routers/users.py:115
+  - 支撑模块：配置、数据库连接、错误提示、测试、迁移。依据：app/config.py:29、app/database.py:16、frontend/src/ui/messages.ts:105、tests/conftest.py:13
+
+- **5）最该先抓住的 20%**：如果你只先吃透 20%，请抓这 8 个文件：app/main.py:14、app/deps.py:25、app/models.py:38、app/routers/auth.py:19、app/routers/articles.py:22、app/crud/user.py:267、frontend/src/api/client.ts:21、tests/test_api.py:68。因为它们几乎串起了“启动、鉴权、核心数据、请求流、测试预期”。
+
+**第 3 部分：目录结构精讲**
+
+- 1）根目录为什么这样分
+
+  ：
+
+  - app/：后端全部业务代码，存在的原因是把 API 服务单独收口。入口在 app/main.py:27
+  - frontend/：前端全部页面代码，存在的原因是前后端职责分离。入口在 frontend/src/main.ts:6
+  - alembic/：数据库迁移脚本，存在的原因是正式管理表结构变更。依据：alembic/env.py:16
+  - tests/：接口测试，存在的原因是保证核心功能不被改坏。依据：tests/test_api.py:68
+  - .env.example、frontend/.env.example：环境变量模板，存在的原因是让不同环境可配置。依据：.env.example:1、frontend/.env.example:1
+  - requirements.txt、frontend/package.json：依赖清单，存在的原因是复现运行环境。依据：frontend/package.json:1
+
+- 2）后端目录怎么理解
+
+  ：
+
+  - app/main.py：程序入口，创建 FastAPI 实例、挂中间件、挂路由、定义启动生命周期。必须先看。依据：app/main.py:14
+  - app/config.py：统一读取 .env。它是全项目配置中心。必须先看。依据：app/config.py:9
+  - app/database.py：数据库引擎、会话工厂、建表函数。必须先看。依据：app/database.py:16
+  - app/models.py：数据库表定义。必须精读。依据：app/models.py:38
+  - app/schemas.py：接口的“收什么、回什么”。必须精读。依据：app/schemas.py:32
+  - app/security.py：密码加密、JWT 生成与解析。优先级高。依据：app/security.py:14
+  - app/deps.py：FastAPI 依赖注入点；项目的权限控制中枢。优先级极高。依据：app/deps.py:19
+  - app/routers/：可以把它理解成“控制器层”，负责路由入口。依据：app/routers/__init__.py:9
+  - app/crud/：这里没有再拆 service/，所以它同时承担“数据访问 + 一部分业务逻辑”。这是项目自己的取舍。依据：app/crud/user.py:65
+
+- 3）前端目录怎么理解
+
+  ：
+
+  - frontend/index.html：浏览器最先拿到的 HTML 外壳。依据：frontend/index.html:1
+  - frontend/src/main.ts：前端入口。依据：frontend/src/main.ts:1
+  - frontend/src/App.vue：应用壳，负责全局导航和启动后恢复用户状态。依据：frontend/src/App.vue:7
+  - frontend/src/router/index.ts：页面路由表。必须先看。依据：frontend/src/router/index.ts:14
+  - frontend/src/pages/：页面级功能实现；你可以把它理解成“每一个业务场景的总装配处”。依据：frontend/src/pages/ArticleListPage.vue:1
+  - frontend/src/components/：可复用小组件，比如头像徽章、导航栏。依据：frontend/src/components/NavBar.vue:1
+  - frontend/src/api/：前端请求层，统一封装所有后端 API。必须精读。依据：frontend/src/api/client.ts:21
+  - frontend/src/state/：全局状态，这里只有认证状态，没有引入更重的状态库。依据：frontend/src/state/auth.ts:15
+  - frontend/src/ui/messages.ts：文案和错误映射，属于“轻量工具层”。依据：frontend/src/ui/messages.ts:1
+
+- 4）这个项目里没有的层，也很重要
+
+  ：
+
+  - 后端没有单独 service/ 目录，所以业务逻辑分散在 routers 和 crud 里。
+  - 前端没有 hooks/ 目录，页面逻辑直接写在页面组件里。
+  - 后端没有自定义业务中间件，只有 CORS；鉴权主要靠 Depends 依赖。依据：app/main.py:34、app/deps.py:21
+
+- 5）阅读优先级
+
+  ：
+
+  - **第一轮必须看**：app/main.py:14、app/config.py:29、app/models.py:38、app/deps.py:25、app/routers/*.py、frontend/src/main.ts:1、frontend/src/router/index.ts:14、frontend/src/api/client.ts:21
+  - **第二轮再看**：app/crud/*.py、frontend/src/pages/*.vue、tests/test_api.py:68
+  - **暂时可跳过**：frontend/src/style.css、.vscode/*、output/*
+
+**第 4 部分：启动流程精讲**
+
+- 1）后端从你执行命令开始发生了什么
+
+  ：
+
+  - 你执行 python -m uvicorn app.main:app ... 后，Uvicorn 会导入 app.main，找到里面的 app 对象。这是框架行为，程序入口在 app/main.py:27
+  - app.main 导入时，会先导入 app.config，而 app.config 一进来就执行 load_dotenv()，把 .env 读进环境变量。依据：app/config.py:9
+  - 接着导入 app.database，创建数据库引擎和会话工厂。依据：app/database.py:16、app/database.py:31
+  - 然后导入 app.routers，把 /auth、/users、/articles 三组路由挂到 /api/v1 前缀下。依据：app/routers/__init__.py:9
+  - FastAPI 应用实例创建完成后，会注册 CORS，允许前端 5173 端口访问。依据：app/main.py:34、app/config.py:18
+
+- 2）后端真正“开始服务”前还会做什么
+
+  ：
+
+  - FastAPI 会执行 lifespan 启动逻辑。依据：app/main.py:14
+
+  - 如果 AUTO_CREATE_TABLES=true，就直接 create_all 自动建表。依据：app/main.py:16、app/database.py:45
+
+  - 如果发现有
+
+     
+
+    users
+
+     
+
+    表，就会做两件启动修复：
+
+    - 把旧的 USER/ADMIN 角色值转成小写。依据：app/main.py:21、app/crud/user.py:373
+    - 如果 .env 里配置了初始管理员，就自动创建或提升管理员。依据：app/main.py:22、app/crud/user.py:353
+
+  - 之后应用才开始接收请求。
+
+- 3）前端从你执行命令开始发生了什么
+
+  ：
+
+  - 你执行 npm run dev，Vite 启动开发服务器。依据：frontend/package.json:6、frontend/vite.config.ts:4
+  - 浏览器打开 http://127.0.0.1:5173 时，先拿到 frontend/index.html。依据：frontend/index.html:1
+  - HTML 里再加载 /src/main.ts，Vue 应用启动，把 App.vue 挂到 #app。依据：frontend/index.html:10、frontend/src/main.ts:6
+  - Router 初始化，按当前 URL 决定渲染哪个页面。依据：frontend/src/router/index.ts:14
+
+- 4）前端首次加载页面时发生什么
+
+  ：
+
+  - App.vue 挂载后，如果本地 localStorage 里有 token 但没有用户对象，就会自动请求 /users/me 恢复当前登录用户。依据：frontend/src/App.vue:7
+  - 如果恢复失败，就清掉本地 token 和 user，等于自动登出。依据：frontend/src/App.vue:15
+  - 之后具体页面自己在 onMounted 里发请求，比如文章列表页会调用 api.listArticles()。依据：frontend/src/pages/ArticleListPage.vue:25
+
+- 5）一句话时序图
+
+  ：
+
+  - 后端：命令 -> 读配置 -> 建数据库连接 -> 创建 app -> 注册路由/CORS -> 启动修复 -> 等待请求
+  - 前端：命令 -> Vite 起服务 -> 浏览器加载 index.html -> main.ts 挂载 App -> Router 匹配页面 -> 页面发 API 请求
+
+**第 5 部分：核心链路精讲**
+
+- 链路 A：登录 -> 进入系统 -> 刷新后保持登录
+
+  - 用户在 LoginPage 输入用户名密码并提交。依据：frontend/src/pages/LoginPage.vue:13
+
+  - 页面调用 api.login()，请求层统一加 JSON 头。依据：frontend/src/api/client.ts:63
+
+  - 后端 POST /auth/login 进入 auth.py，调用 crud_user.authenticate_user()。依据：app/routers/auth.py:42、app/crud/user.py:286
+
+  - authenticate_user() 会查用户、校验是否启用、校验密码哈希。依据：app/crud/user.py:291、app/security.py:18
+
+  - 成功后 create_access_token() 生成 JWT，其中塞了 sub、username、role、jti、exp。依据：app/routers/auth.py:52、app/security.py:26
+
+  - 前端拿到 token 后先保存，再请求 /users/me 获取完整用户信息并缓存。依据：frontend/src/pages/LoginPage.vue:21
+
+  - 刷新页面时，App.vue 会尝试恢复用户信息。依据：frontend/src/App.vue:7
+
+  - 容易出 bug 的点
+
+    ：
+
+    - 本地缓存的 user 可能过期，因为 App.vue 只有“有 token 但没 user”时才主动刷新。依据：frontend/src/App.vue:8
+    - JWT 里虽然有 role，但后端并不直接信 token 里的角色，而是每次再查数据库用户，这其实是个好设计。依据：app/security.py:26、app/deps.py:46、app/deps.py:70
+    - 退出登录靠“黑名单”实现，而不是只删前端 token，这样老 token 也会失效。依据：app/routers/auth.py:62、app/crud/token_blacklist.py:7
+
+- 链路 B：发文章
+
+  - 用户打开 /articles/new 页面，填写标题、摘要、内容。依据：frontend/src/pages/ArticleEditorPage.vue:91
+
+  - 点击提交后，页面会先判断是否登录，再调用 api.createArticle()。依据：frontend/src/pages/ArticleEditorPage.vue:36
+
+  - 请求层自动把 `Authorization: Bearer <token>` 带上。依据：frontend/src/api/client.ts:26
+
+  - 后端 POST /articles 进入路由，先通过 get_current_user() 拿当前用户。依据：app/routers/articles.py:28、app/deps.py:46
+
+  - get_current_user() 内部又会先解析 token、校验 token 是否在黑名单里、再查数据库确认用户存在且启用。依据：app/deps.py:25、app/deps.py:36
+
+  - 验证通过后，crud_article.create_article() 创建文章并提交数据库。依据：app/crud/article.py:13
+
+  - 返回给前端的是 ArticleRead，里面还嵌套作者信息。依据：app/schemas.py:142
+
+  - 前端跳转到 `/articles/{id}` 详情页。依据：frontend/src/pages/ArticleEditorPage.vue:62
+
+  - 容易出 bug 的点
+
+    ：
+
+    - 页面层没有路由守卫，没登录也能直接打开 /articles/new，只是提交时才报错。依据：frontend/src/router/index.ts:21、frontend/src/pages/ArticleEditorPage.vue:39
+    - ArticleDetailPage 只要“已登录”就显示编辑/删除按钮，没有判断是不是作者本人，真正权限控制在后端；这会造成“按钮可见但点了报 403”的体验问题。依据：frontend/src/pages/ArticleDetailPage.vue:62、app/deps.py:79
+    - 一个比较重要的安全细节：ArticleRead.author 用的是 UserPublic，而 UserPublic 包含 email，所以公开文章接口实际上会把作者邮箱也返回出去。前端没展示，但 API 数据已经泄露了。依据：app/schemas.py:62、app/schemas.py:142
+
+- 链路 C：管理员改用户角色/状态，并写审计日志
+
+  - 管理员打开 /admin/users，页面加载用户列表、筛选条件、当前选中用户详情。依据：frontend/src/pages/AdminUsersPage.vue:114
+
+  - 页面调用 api.listUsersForAdmin()，后端通过 get_current_admin() 强校验管理员身份。依据：frontend/src/api/client.ts:74、app/routers/users.py:28、app/deps.py:70
+
+  - 列表查询在 crud_user.list_admin_users()，里面做了搜索、角色过滤、启停过滤、排序、分页。依据：app/crud/user.py:123、app/crud/user.py:159
+
+  - 当管理员操作单个或批量用户时，前端其实是 Promise.all 连发多个 `PATCH /users/admin/{id}`。依据：frontend/src/pages/AdminUsersPage.vue:280
+
+  - 后端更新用户前会阻止“管理员修改自己的管理员状态”。依据：app/routers/users.py:130
+
+  - 真正写库在 crud_user.admin_update_user()，如果角色或状态发生变化，就调用 _build_admin_audit_log() 生成审计日志并一并提交。依据：app/crud/user.py:65、app/crud/user.py:320
+
+  - 审计日志页再通过 /users/admin/audit-logs 查询日志。依据：app/routers/users.py:58、frontend/src/pages/AdminAuditLogsPage.vue:49
+
+  - 容易出 bug 的点
+
+    ：
+
+    - 批量操作没有后端“批量事务接口”，只是前端循环调多个单条接口，意味着中途某一条失败时，可能出现部分成功、部分失败。依据：frontend/src/pages/AdminUsersPage.vue:291
+    - 前端也没有路由级管理员守卫，直接访问页面时是靠后端 API 403 拦住。依据：frontend/src/router/index.ts:24
+    - 审计日志这个功能和迁移文件存在潜在不一致：模型里有 admin_audit_logs 表，但初始 Alembic 迁移里没有这张表。如果未来关闭 AUTO_CREATE_TABLES 且只跑迁移，可能出问题。依据：app/models.py:97、alembic/versions/20260311_0001_init_blog_tables.py:20、app/main.py:16
+
+**第 6 部分：架构设计讲透**
+
+- **1）它采用的架构思想**：这是一个“简单分层的全栈单体应用”。不是复杂 DDD，也不是微服务。后端大致是 router -> deps -> crud -> model/db，前端大致是 page -> api -> state。依据：app/routers/articles.py:22、app/deps.py:25、app/crud/article.py:13、frontend/src/pages/ArticleListPage.vue:25、frontend/src/api/client.ts:21
+
+- **2）为什么这样分层**：因为这个项目规模不大，这样分已经能清晰地把“入口、权限、数据访问、数据结构”分开，学习成本低、改动路径短。我这是基于代码体量和目录结构做的判断。依据：app/ 目录结构本身、frontend/src/ 目录结构本身
+
+- 3）为什么这样拆模块
+
+  ：
+
+  - 按业务拆路由：auth、articles、users
+  - 按职责拆基础模块：config、database、security、deps
+  - 按页面拆前端：登录页、注册页、文章页、管理员页
+    这样拆的好处是新人看起来更像“场景地图”，而不是一堆杂糅文件。依据：app/routers/__init__.py:10、frontend/src/router/index.ts:16
+
+- 4）哪些设计是为了复用 / 可维护 / 扩展
+
+  ：
+
+  - **复用**：frontend/src/api/client.ts:57 把请求统一封装；frontend/src/components/NavBar.vue:1、frontend/src/components/AvatarBadge.vue 抽成公共组件；frontend/src/ui/messages.ts:1 集中文案和错误映射
+  - **可维护**：app/schemas.py:32 把输入输出模型独立；app/config.py:29 把配置集中；app/deps.py:25 把权限校验抽出来
+  - **扩展**：管理员模块是在原有用户模块基础上加出来的，说明 users 这块预留了扩展空间。依据：app/routers/users.py:28
+
+- 5）哪些地方体现了工程经验
+
+  ：
+
+  - 用户名和邮箱统一转小写，避免大小写混乱。依据：app/crud/user.py:23、app/crud/user.py:274
+  - SQLite 强制打开外键约束。依据：app/database.py:23
+  - JWT 做注销黑名单，而不是只在前端删 token。依据：app/deps.py:36
+  - 测试时用依赖覆盖，把真实数据库替换成临时库。依据：tests/conftest.py:41
+  - 启动时自动修复历史角色大小写数据，说明作者考虑过数据兼容。依据：app/crud/user.py:373
+  - 查询文章和用户详情用了 selectinload，避免典型 N+1 查询问题。依据：app/crud/article.py:10、app/crud/user.py:247
+
+- 6）哪些是框架约定，哪些是项目自己的设计
+
+  ：
+
+  - **框架约定**：FastAPI 的 APIRouter、Depends、Pydantic 模型、Vue 单文件组件、Vue Router、Vite 环境变量。依据：app/routers/auth.py:16、app/deps.py:21、frontend/src/router/index.ts:14
+  - **项目自己的设计**：crud/ 目录、统一 schemas.py、前端 api/client.ts、state/auth.ts、ui/messages.ts、管理员审计日志模块。依据：app/crud/user.py:1、frontend/src/api/client.ts:21
+
+**第 7 部分：新人阅读顺序**
+
+- **第 1 步先看什么**：先看 README.md、.env.example:1、frontend/.env.example:1、frontend/package.json:1
+  带着的问题：这个项目能做什么、怎么跑、前后端怎么通信。
+  看完应该获得：全局业务和启动方法。
+
+- **第 2 步**：看 app/main.py:14、app/config.py:29、app/database.py:16、app/routers/__init__.py:9
+  带着的问题：后端怎么启动、配置在哪里、路由前缀是什么、数据库何时初始化。
+  看完应该获得：后端骨架图。
+
+- **第 3 步**：看 app/models.py:38、app/schemas.py:32
+  带着的问题：系统有哪些核心实体、接口收发的数据长什么样。
+  看完应该获得：数据视角的“世界观”。
+
+- **第 4 步**：看 app/security.py:14、app/deps.py:25、app/routers/auth.py:42、app/crud/token_blacklist.py:7
+  带着的问题：登录怎么做、权限怎么拦、退出登录为什么还能让 token 失效。
+  看完应该获得：认证鉴权主链路。
+
+- **第 5 步**：看 app/routers/articles.py:22、app/crud/article.py:13
+  带着的问题：文章从请求到落库是怎么走的。
+  看完应该获得：最典型 CRUD 链路。
+
+- **第 6 步**：看 app/routers/users.py:24、app/crud/user.py:110、app/crud/user.py:320
+  带着的问题：普通用户、管理员、审计日志是怎么区分的。
+  看完应该获得：用户系统和后台管理逻辑。
+
+- **第 7 步**：看 tests/conftest.py:13、tests/test_api.py:68
+  带着的问题：作者最看重哪些行为、系统“应该怎样工作”。
+  看完应该获得：接口级验收标准。
+
+- **第 8 步**：看 frontend/src/main.ts:1、frontend/src/App.vue:7、frontend/src/router/index.ts:14、frontend/src/state/auth.ts:15、frontend/src/api/client.ts:21
+  带着的问题：前端怎么启动、怎么恢复登录状态、怎么发请求。
+  看完应该获得：前端主骨架。
+
+- 第 9 步
+
+  ：按功能看页面：
+
+  - 登录注册：frontend/src/pages/LoginPage.vue:1、frontend/src/pages/RegisterPage.vue:1
+  - 文章链路：frontend/src/pages/ArticleListPage.vue:25、frontend/src/pages/ArticleDetailPage.vue:19、frontend/src/pages/ArticleEditorPage.vue:36
+  - 个人资料：frontend/src/pages/ProfilePage.vue:21
+  - 管理员：frontend/src/pages/AdminUsersPage.vue:114、frontend/src/pages/AdminAuditLogsPage.vue:49
+
+- **第 10 步**：最后看 alembic/env.py:16、alembic/versions/20260311_0001_init_blog_tables.py:20
+  带着的问题：表结构怎么演进，和当前模型是否一致。
+  看完应该获得：数据库演进视角。
+
+- 精读 vs 知道作用即可
+
+  ：
+
+  - **必须精读**：app/main.py、app/deps.py、app/models.py、app/schemas.py、app/routers/*.py、app/crud/user.py、frontend/src/api/client.ts、frontend/src/state/auth.ts
+  - **知道作用即可**：frontend/src/style.css、.vscode/settings.json、output/*
+
+**第 8 部分：工程能力提升视角**
+
+- 1）你能从这个项目学到什么工程思想
+
+  ：
+
+  - 一条请求链应该怎么被清楚地分层
+  - 鉴权不该散落在各处，而该集中处理
+  - 输入模型和数据库模型要分开
+  - 测试最好能绕开真实数据库，跑临时环境
+
+- 2）值得特别注意的工程实践
+
+  ：
+
+  - **目录设计**：后端按职责分，前端按页面分，适合中小项目快速理解。依据：app/、frontend/src/
+  - **分层**：后端把“入口、权限、数据访问”分开，这是很值得学的。依据：app/routers/articles.py:22、app/deps.py:25
+  - **组件复用**：AvatarBadge、NavBar、统一消息表是轻量但有效的复用。依据：frontend/src/components/NavBar.vue:1、frontend/src/ui/messages.ts:1
+  - **配置管理**：前后端都走环境变量，而不是把地址和密钥写死。依据：app/config.py:29、frontend/src/api/client.ts:17
+  - **环境隔离**：测试单独建临时 SQLite，不污染开发库。依据：tests/conftest.py:15
+  - **错误处理**：后端用 HTTPException，前端统一把英文错误映射成中文提示。依据：app/routers/auth.py:26、frontend/src/ui/messages.ts:105
+  - **日志**：业务上有管理员审计日志，但系统级日志还比较弱。依据：app/models.py:97
+  - **测试**：后端测试覆盖了主链路，前端测试目前没有看到。依据：tests/test_api.py:68
+  - **性能**：有基础优化，比如 selectinload；但没有更深的缓存、批量接口优化。依据：app/crud/article.py:10
+  - **安全性**：有密码哈希、JWT、黑名单、管理员 DB 二次校验；但也有隐患，比如文章接口暴露作者邮箱。依据：app/security.py:14、app/schemas.py:62
+  - **部署方式**：仓库里没有明显的 Docker / CI / 云部署配置，我判断它当前更偏本地开发和教学演示。这个判断的依据是顶层没有相关部署文件。
+
+- 3）值得借鉴的地方
+
+  ：
+
+  - 登录与权限控制做得清楚
+  - API 封装和错误映射对前端很友好
+  - 测试写法适合作为中小项目模板
+  - 启动时的“兼容旧数据修复”很有实战味道
+
+- 4）可能的技术债务 / 历史包袱
+
+  ：
+
+  - **迁移和模型不一致**：admin_audit_logs 在模型里有，但初始迁移里没有。依据：app/models.py:97、alembic/versions/20260311_0001_init_blog_tables.py:20
+  - **同时存在 create_all 和 Alembic 两套表结构管理方式**，本地方便，长期可能混乱。依据：app/main.py:16、alembic/env.py:16
+  - **前端没有路由守卫**，更多依赖后端拒绝请求。依据：frontend/src/router/index.ts:14
+  - **管理员批量操作没有后端批量接口**，前端循环调用。依据：frontend/src/pages/AdminUsersPage.vue:291
+  - **公开文章接口返回作者邮箱**，有隐私风险。依据：app/schemas.py:62、app/schemas.py:142
+  - **前端缓存用户信息可能陈旧**。依据：frontend/src/App.vue:8
+  - **没有看到前端自动化测试和系统级日志**。依据：仓库 tests/ 只有后端接口测试
+
+**第 9 部分：如果我要改需求 / 修 bug，我该怎么下手**
+
+- 1）新增一个功能怎么入手
+
+  ：
+
+  - 先判断有没有新数据字段：有的话先看 app/models.py:38
+  - 再补接口输入输出：看 app/schemas.py:32
+  - 再写后端路由：看 app/routers/*.py
+  - 再写数据访问：看 app/crud/*.py
+  - 再补测试：看 tests/test_api.py:68
+  - 最后接前端：frontend/src/api/client.ts:57 -> frontend/src/api/types.ts:1 -> frontend/src/pages/*.vue
+
+- 2）某个页面出错怎么定位
+
+  ：
+
+  - 先看浏览器 Network：失败的是哪个接口
+  - 再看这个页面的 onMounted 或 onSubmit
+  - 再看 api/client.ts 组装了什么请求
+  - 再去后端对应路由
+  - 再看这个路由依赖了哪些 deps
+  - 最后看 crud 和数据库
+    例如文章详情页出错，先看 frontend/src/pages/ArticleDetailPage.vue:19，再看 frontend/src/api/client.ts:144，再看 app/routers/articles.py:59
+
+- 3）某个接口异常怎么排查
+
+  ：
+
+  - 第一步确认是 400 / 401 / 403 / 404 / 500 哪一类
+  - 第二步看路由函数里最先做了什么校验
+  - 第三步看 deps.py 是否拦截了
+  - 第四步看 crud 是否查不到数据或提交失败
+  - 第五步看测试里有没有同类用例
+    例如登录异常就看：app/routers/auth.py:42 -> app/crud/user.py:286 -> app/security.py:18
+
+- 4）数据库字段变化会影响哪些层
+
+  ：
+
+  - app/models.py
+  - Alembic 迁移
+  - app/schemas.py
+  - app/crud/*.py
+  - 相关路由返回
+  - frontend/src/api/types.ts
+  - 相关页面表单与展示
+  - 测试
+    这基本是“全链路变更”。
+
+- 5）通用问题排查思路
+
+  ：
+
+  - 先**复现**
+  - 再**确认在哪一层坏了**：前端展示 / 请求封装 / 路由 / 权限 / 数据库
+  - 再**读最短路径代码**
+  - 再**写一个能稳定复现的测试**
+  - 最后**修复并回归验证**
+  - 你以后看陌生项目，也尽量都按这个顺序走，不要一上来满仓库乱搜
+
+**第 10 部分：最后给你一个总结**
+
+- 1）脑图式总结
+
+  - 项目本体
+
+    - 前端
+
+       
+
+      frontend/
+
+      - 入口：frontend/index.html:1、frontend/src/main.ts:1
+      - 路由：frontend/src/router/index.ts:14
+      - 页面：登录 / 注册 / 文章 / 用户 / 管理员
+      - 基础层：api/client.ts、state/auth.ts、ui/messages.ts
+
+    - 后端
+
+       
+
+      app/
+
+      - 入口：app/main.py:14
+      - 配置：app/config.py:29
+      - 数据库：app/database.py:16
+      - 模型：app/models.py:38
+      - 接口模型：app/schemas.py:32
+      - 权限：app/deps.py:25
+      - 安全：app/security.py:14
+      - 路由：auth / articles / users
+      - 数据访问：crud/*
+
+    - 数据与支撑
+
+      - SQLite：blog.db
+      - 迁移：alembic/*
+      - 测试：tests/*
+
+- 2）30 分钟快速入门路线
+
+  - 10 分钟：看 README.md、.env.example:1、frontend/.env.example:1
+  - 5 分钟：看 app/main.py:14、app/routers/__init__.py:9
+  - 5 分钟：看 app/models.py:38、app/schemas.py:32
+  - 5 分钟：看 app/routers/auth.py:42、app/deps.py:25
+  - 5 分钟：看 frontend/src/api/client.ts:21、frontend/src/router/index.ts:14
+
+- 3）3 天深入理解路线
+
+  - **第 1 天**：吃透后端主骨架和认证链路：main -> config -> database -> deps -> auth -> security
+  - **第 2 天**：吃透文章和用户/管理员链路：articles -> users -> crud/user -> tests
+  - **第 3 天**：吃透前端：main.ts -> App.vue -> router -> state/auth -> api/client -> 各页面
+
+- 4）最值得吃透的 10 个知识点
+
+  - FastAPI 的依赖注入怎么做权限控制
+  - JWT 登录与注销黑名单
+  - SQLAlchemy 异步会话怎么组织
+  - Pydantic 输入输出模型怎么和 ORM 分离
+  - 请求从前端页面走到数据库的完整路径
+  - 前端统一 API 层的设计
+  - 本地 localStorage 登录态恢复
+  - 管理员功能如何在原有用户系统上扩展
+  - 测试如何覆盖真实业务主链路
+  - 表结构迁移和自动建表共存时的风险

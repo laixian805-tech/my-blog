@@ -139,9 +139,8 @@ export default function SiteStatusPanel({
   ]
 
   return (
-    <div className="rounded-[26px] border border-slate-200/80 bg-white/88 p-5 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)] dark:border-gray-800 dark:bg-slate-950/88">
-      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">站点状态</p>
-      <div className="mt-5 space-y-4">
+    <div className="rounded-[26px] border border-white/80 bg-white/72 p-5 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.28)] backdrop-blur dark:border-white/8 dark:bg-slate-950/68">
+      <div className="space-y-4">
         {statusItems.map((item, index) => (
           <StatusRow
             key={item.label}

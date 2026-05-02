@@ -117,6 +117,84 @@
   }
 }
 
+@layer components {
+  .card-shell {
+    position: relative;
+    transition-property:
+      transform,
+      box-shadow,
+      border-color,
+      background-color,
+      color,
+      outline-color;
+    transition-duration: 220ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+
+  .card-shell-interactive {
+    cursor: pointer;
+  }
+
+  .card-shell-title,
+  .card-shell-cta {
+    transition-property: color, background-color, border-color;
+    transition-duration: 220ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .card-shell-interactive:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 4px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .card-shell-static:hover {
+      transform: translateY(-2px);
+      border-color: rgb(203 213 225 / 0.88);
+      box-shadow: 0 22px 48px -40px rgba(15, 23, 42, 0.55);
+    }
+
+    .dark .card-shell-static:hover {
+      border-color: rgb(71 85 105 / 0.88);
+      box-shadow: 0 24px 52px -42px rgba(2, 6, 23, 0.95);
+    }
+
+    .card-shell-interactive:hover {
+      transform: translateY(-4px);
+      border-color: rgb(52 211 153 / 0.38);
+      box-shadow: 0 30px 62px -38px rgba(15, 23, 42, 0.62);
+    }
+
+    .dark .card-shell-interactive:hover {
+      border-color: rgb(16 185 129 / 0.55);
+      box-shadow: 0 32px 64px -40px rgba(2, 6, 23, 0.98);
+    }
+
+    .card-shell-interactive:hover .card-shell-title,
+    .card-shell-interactive:hover .card-shell-cta {
+      color: rgb(5 150 105);
+    }
+
+    .dark .card-shell-interactive:hover .card-shell-title,
+    .dark .card-shell-interactive:hover .card-shell-cta {
+      color: rgb(110 231 183);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-shell {
+      transition-duration: 120ms;
+      will-change: auto;
+    }
+
+    .card-shell-static:hover,
+    .card-shell-interactive:hover {
+      transform: none;
+    }
+  }
+}
+
 .task-list-item::before {
   @apply hidden;
 }

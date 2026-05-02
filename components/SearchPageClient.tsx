@@ -345,12 +345,9 @@ function SearchResultCard({ item, tokens }: { item: SearchResultItem; tokens: st
       }
       footerContent={
         <div className="flex items-center justify-between gap-4 text-sm">
-          <Link
-            href={`/${item.path}`}
-            className="font-semibold text-emerald-700 dark:text-emerald-300"
-          >
+          <span className="card-shell-cta font-semibold text-emerald-700 dark:text-emerald-300">
             继续查看 &rarr;
-          </Link>
+          </span>
           <span className="text-xs text-slate-400 dark:text-slate-500">{item.path}</span>
         </div>
       }

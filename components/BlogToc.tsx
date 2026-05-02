@@ -1,7 +1,7 @@
 import TOCInline from 'pliny/ui/TOCInline'
-import type { Blog, SecurityNote } from 'contentlayer/generated'
+import type { Blog, CourseNote, SecurityNote, Talk } from 'contentlayer/generated'
 
-type TocEntry = Blog['toc'] | SecurityNote['toc']
+type TocEntry = Blog['toc'] | SecurityNote['toc'] | CourseNote['toc'] | Talk['toc']
 
 interface BlogTocProps {
   toc?: TocEntry

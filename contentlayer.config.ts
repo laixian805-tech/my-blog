@@ -153,6 +153,52 @@ export const SecurityNote = defineDocumentType(() => ({
   },
 }))
 
+export const Talk = defineDocumentType(() => ({
+  name: 'Talk',
+  filePathPattern: 'talks/**/*.mdx',
+  contentType: 'mdx',
+  fields: createContentFields(),
+  computedFields: {
+    ...computedFields,
+    structuredData: {
+      type: 'json',
+      resolve: (doc) => ({
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: doc.title,
+        datePublished: doc.date,
+        dateModified: doc.lastmod || doc.date,
+        description: doc.summary,
+        image: doc.images ? doc.images[0] : siteMetadata.socialBanner,
+        url: `${siteMetadata.siteUrl}/${doc._raw.flattenedPath}`,
+      }),
+    },
+  },
+}))
+
+export const CourseNote = defineDocumentType(() => ({
+  name: 'CourseNote',
+  filePathPattern: 'courses/**/*.mdx',
+  contentType: 'mdx',
+  fields: createContentFields(),
+  computedFields: {
+    ...computedFields,
+    structuredData: {
+      type: 'json',
+      resolve: (doc) => ({
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: doc.title,
+        datePublished: doc.date,
+        dateModified: doc.lastmod || doc.date,
+        description: doc.summary,
+        image: doc.images ? doc.images[0] : siteMetadata.socialBanner,
+        url: `${siteMetadata.siteUrl}/${doc._raw.flattenedPath}`,
+      }),
+    },
+  },
+}))
+
 export const Authors = defineDocumentType(() => ({
   name: 'Authors',
   filePathPattern: 'authors/**/*.mdx',
@@ -174,7 +220,7 @@ export const Authors = defineDocumentType(() => ({
 
 export default makeSource({
   contentDirPath: 'data',
-  documentTypes: [Blog, SecurityNote, Authors],
+  documentTypes: [Blog, SecurityNote, Talk, CourseNote, Authors],
   mdx: {
     cwd: process.cwd(),
     remarkPlugins: [

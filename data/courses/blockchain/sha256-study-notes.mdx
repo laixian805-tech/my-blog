@@ -1,0 +1,106 @@
+---
+title: SHA-256 哈希算法实验说明文档
+date: 2026-04-10
+summary: 基于 Python 的 SHA-256 实现实验说明，覆盖实验背景、目标、运行方式和项目结构。
+tags:
+  - 课程学习
+  - 区块链
+  - SHA-256
+authors:
+  - default
+layout: PostLayout
+---
+
+## 实验名称
+
+基于 Python 的 SHA-256 哈希算法实现、验证与可视化展示实验。
+
+## 实验背景
+
+SHA-256 是区块链系统中最常见的密码学哈希算法之一，常用于：
+
+- 区块和交易摘要生成
+- 数据完整性校验
+- 数字签名中的消息预处理
+- 身份认证与防篡改
+
+本实验在老师提供的源码基础上，保留自定义算法实现，同时加入标准库对照验证和图形界面展示，方便从“算法原理”和“程序效果”两个角度讲解。
+
+## 实验目标
+
+1. 理解 SHA-256 的消息填充、消息分组、消息扩展和压缩函数过程。
+2. 使用 Python 手动实现 SHA-256 的核心计算流程。
+3. 使用 `hashlib` 作为对照组验证自定义实现的正确性。
+4. 通过图形界面展示文本和文件的哈希计算结果。
+5. 在老师源码基础上完成可落地的微调改进，并说明改进价值。
+
+## 运行环境与依赖
+
+推荐环境：
+
+- Windows
+- PowerShell
+- Python 3.14
+- 虚拟环境：项目根目录下的 `.venv_tlx`
+
+当前额外依赖：
+
+- `tkinterdnd2`
+- `pytest`
+
+说明：
+
+- `tkinter` 和 `hashlib` 都来自 Python 标准库，不需要单独安装。
+
+## 快速启动
+
+### 安装依赖
+
+```powershell
+cd "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\sha256_hash_python(1)"
+python -m pip install -r requirements.txt
+```
+
+### 启动 GUI
+
+```powershell
+& "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\.venv_tlx\Scripts\python.exe" "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\sha256_hash_python(1)\sha256_hash_python\GUI.py"
+```
+
+### 运行测试
+
+```powershell
+& "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\.venv_tlx\Scripts\python.exe" -m pytest "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\sha256_hash_python(1)\sha256_hash_python\test_sha256_project.py" -q
+```
+
+## 项目结构说明
+
+### `sha256_hash_python/SHA256.py`
+
+自定义 SHA-256 算法实现文件，是本实验核心。外部调用方式仍然保持 `SHA256(msg).getHash()` 不变，但内部从字符串逐位运算升级为 32 位整数位运算。
+
+### `sha256_hash_python/SHA256_.py`
+
+基于标准库 `hashlib.sha256()` 的对照实现，用来验证自定义实现结果是否正确。
+
+### `sha256_hash_python/GUI.py`
+
+图形界面程序，支持文本输入、拖入文本或图片文件、展示自定义实现结果与标准库结果，并验证两者是否一致。
+
+### `sha256_hash_python/test_sha256_project.py`
+
+自动化测试文件，用于验证：
+
+- 自定义实现与 `hashlib` 结果一致
+- 文本末尾换行不会丢失
+- 含空格路径的拖拽文本文件能够正确读取
+- 长消息和字节输入场景也能正确计算
+
+## 展示思路
+
+如果是给老师演示，比较合适的顺序是：
+
+1. 先说明 SHA-256 在区块链里的作用。
+2. 展示自定义实现与标准库对照验证。
+3. 再通过 GUI 演示文本和文件哈希结果。
+4. 最后补充自动化测试，说明不是只做了“能点开的界面”，而是对正确性做了校验。

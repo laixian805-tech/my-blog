@@ -22,18 +22,12 @@ const socialItems: Array<{ kind: SocialKind; href: string }> = [
 export default function Footer() {
   return (
     <footer className="mt-16 pb-10">
-      <div className="rounded-[32px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(236,253,245,0.9))] p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.35)] sm:p-8 dark:border-gray-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.96),rgba(6,23,23,0.98))]">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl space-y-3">
-            <p className="text-xs font-semibold tracking-[0.22em] text-emerald-700 uppercase dark:text-emerald-300">
-              {siteMetadata.homePortalLabel}
-            </p>
+      <div className="rounded-[32px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(241,245,249,0.94))] p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.25)] sm:p-8 dark:border-gray-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.96),rgba(6,23,23,0.98))]">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
             <h2 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
               {siteMetadata.title}
             </h2>
-            <p className="text-sm leading-7 text-slate-600 dark:text-slate-300">
-              把学习入口、专题笔记和文章归档整理成一个可持续扩展的个人 Wiki。
-            </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {siteMetadata.homeProfileTagline}
             </p>
@@ -44,21 +38,21 @@ export default function Footer() {
               href="/nav"
               className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-emerald-300"
             >
-              <span>学习导航</span>
+              <span>导航</span>
               <span aria-hidden="true">&rarr;</span>
             </Link>
             <Link
               href="/blog"
               className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 dark:border-emerald-500/20 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-emerald-500/50 dark:hover:text-emerald-300"
             >
-              <span>文章归档</span>
+              <span>归档</span>
               <span aria-hidden="true">&rarr;</span>
             </Link>
             <Link
               href="/security"
               className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 dark:border-emerald-500/20 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-emerald-500/50 dark:hover:text-emerald-300"
             >
-              <span>安全专题</span>
+              <span>安全</span>
               <span aria-hidden="true">&rarr;</span>
             </Link>
           </div>
@@ -88,8 +82,6 @@ export default function Footer() {
                 ))}
               </div>
             )}
-
-            <div className="text-sm text-slate-500 dark:text-slate-400">持续整理，长期沉淀。</div>
           </div>
         </div>
       </div>

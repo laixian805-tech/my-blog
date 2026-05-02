@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 import { formatDate } from 'pliny/utils/formatDate'
 import { CoreContent } from 'pliny/utils/contentlayer'
-import type { Blog, SecurityNote } from 'contentlayer/generated'
+import type { Blog, CourseNote, SecurityNote, Talk } from 'contentlayer/generated'
 import Link from '@/components/Link'
 import PageTitle from '@/components/PageTitle'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
@@ -9,11 +9,11 @@ import SectionContainer from '@/components/SectionContainer'
 import siteMetadata from '@/data/siteMetadata'
 
 interface LayoutProps {
-  content: CoreContent<Blog | SecurityNote>
+  content: CoreContent<Blog | SecurityNote | CourseNote | Talk>
   children: ReactNode
   next?: { path: string; title: string }
   prev?: { path: string; title: string }
-  toc?: Blog['toc'] | SecurityNote['toc']
+  toc?: Blog['toc'] | SecurityNote['toc'] | CourseNote['toc'] | Talk['toc']
 }
 
 export default function PostSimple({ content, next, prev, children }: LayoutProps) {

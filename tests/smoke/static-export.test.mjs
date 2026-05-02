@@ -18,14 +18,27 @@ test('static export emits the expected route files', () => {
   assert.ok(existsSync(path.join(outDir, 'index.html')))
   assert.ok(existsSync(path.join(outDir, 'blog', 'index.html')))
   assert.ok(existsSync(path.join(outDir, 'blog', 'page', '2', 'index.html')))
+  assert.ok(existsSync(path.join(outDir, 'courses', 'index.html')))
   assert.ok(existsSync(path.join(outDir, 'nav', 'index.html')))
   assert.ok(existsSync(path.join(outDir, 'projects', 'index.html')))
+  assert.ok(existsSync(path.join(outDir, 'projects', 'page', '2', 'index.html')))
   assert.ok(existsSync(path.join(outDir, 'search', 'index.html')))
   assert.ok(existsSync(path.join(outDir, 'security', 'index.html')))
+  assert.ok(existsSync(path.join(outDir, 'talks', 'index.html')))
   assert.ok(existsSync(path.join(outDir, 'blog', 'fastapi-study-notes', 'index.html')))
+  assert.ok(existsSync(path.join(outDir, 'blog', 'local-rag-project-notes', 'index.html')))
+  assert.ok(
+    existsSync(path.join(outDir, 'blog', 'qwen-security-assistant-project-notes', 'index.html'))
+  )
+  assert.ok(
+    existsSync(path.join(outDir, 'courses', 'blockchain', 'sha256-study-notes', 'index.html'))
+  )
   assert.ok(existsSync(path.join(outDir, 'security', 'owasp-top-10', 'index.html')))
+  assert.ok(existsSync(path.join(outDir, 'talks', 'huawei-intern-written-test', 'index.html')))
   assert.ok(existsSync(path.join(outDir, 'search-index.json')))
   assert.equal(existsSync(path.join(outDir, 'blog', 'page', '1', 'index.html')), false)
+  assert.equal(existsSync(path.join(outDir, 'projects', 'page', '1', 'index.html')), false)
+  assert.equal(existsSync(path.join(outDir, 'security', 'page', '1', 'index.html')), false)
 })
 
 test('static search index includes both blog and security content', () => {
@@ -55,11 +68,17 @@ test('exported HTML preserves basePath-aware assets and detail metadata', () => 
   const homeHtml = readExportedFile('index.html')
   const paginatedBlogHtml = readExportedFile('blog', 'page', '2', 'index.html')
   const fastApiHtml = readExportedFile('blog', 'fastapi-study-notes', 'index.html')
+  const courseNoteHtml = readExportedFile(
+    'courses',
+    'blockchain',
+    'sha256-study-notes',
+    'index.html'
+  )
   const owaspHtml = readExportedFile('security', 'owasp-top-10', 'index.html')
 
   assert.match(homeHtml, /\/my-blog\/_next\//)
   assert.match(homeHtml, /\/my-blog\/static\/favicons\/favicon-32x32\.png/)
-  assert.match(homeHtml, /action="\/my-blog\/search\/"/)
+  assert.doesNotMatch(homeHtml, /action="\/my-blog\/search\/"/)
 
   assert.match(paginatedBlogHtml, /https:\/\/laixian805-tech\.github\.io\/my-blog\/blog\/page\/2\//)
   assert.doesNotMatch(paginatedBlogHtml, /\/my-blog\/blog\/page\/1\//)
@@ -68,6 +87,12 @@ test('exported HTML preserves basePath-aware assets and detail metadata', () => 
   assert.match(
     fastApiHtml,
     /https:\/\/laixian805-tech\.github\.io\/my-blog\/blog\/fastapi-study-notes\//
+  )
+
+  assert.match(courseNoteHtml, /application\/ld\+json/)
+  assert.match(
+    courseNoteHtml,
+    /https:\/\/laixian805-tech\.github\.io\/my-blog\/courses\/blockchain\/sha256-study-notes\//
   )
 
   assert.match(owaspHtml, /application\/ld\+json/)
@@ -81,24 +106,29 @@ test('home page renders as a portal landing page instead of a latest-post feed',
   const homeHtml = readExportedFile('index.html')
 
   assert.match(homeHtml, /tlx 的学习导航与知识沉淀/)
+  assert.match(homeHtml, /大深专研一/)
+  assert.match(homeHtml, /课程学习/)
   assert.match(homeHtml, /学习导航/)
   assert.match(homeHtml, /安全专题/)
-  assert.match(homeHtml, /全部文章/)
-  assert.match(homeHtml, /知识入口总览/)
-  assert.match(homeHtml, /四大专题通道/)
-  assert.match(homeHtml, /算法刷题/)
-  assert.match(homeHtml, /后端基础/)
-  assert.match(homeHtml, /AI 工具/)
-  assert.match(homeHtml, /网安资源/)
-  assert.match(homeHtml, /社区论坛/)
-  assert.match(homeHtml, /工具资源/)
-  assert.match(homeHtml, /算法路线/)
-  assert.match(homeHtml, /后端学习/)
-  assert.match(homeHtml, /AI 实用工具/)
-  assert.match(homeHtml, /网络安全笔记/)
+  assert.match(homeHtml, /归档/)
 
   assert.doesNotMatch(homeHtml, /阅读全文/)
   assert.doesNotMatch(homeHtml, /发布日期/)
+  assert.doesNotMatch(homeHtml, /Reading Notes/)
+  assert.doesNotMatch(homeHtml, /Start Here/)
+  assert.doesNotMatch(homeHtml, /知识入口总览/)
+  assert.doesNotMatch(homeHtml, /四大专题通道/)
+  assert.doesNotMatch(homeHtml, /Keep Exploring/)
+  assert.doesNotMatch(homeHtml, /Site Snapshot/)
+})
+
+test('home page stats expose the agreed blog and security card links', () => {
+  const homeHtml = readExportedFile('index.html')
+
+  assert.match(homeHtml, /aria-label="查看 Blog 归档"/)
+  assert.match(homeHtml, /aria-label="查看 Security 归档"/)
+  assert.match(homeHtml, /Blog 数/)
+  assert.match(homeHtml, /安全笔记数/)
 })
 
 test('site chrome and metadata reinforce the portal positioning', () => {
@@ -110,9 +140,22 @@ test('site chrome and metadata reinforce the portal positioning', () => {
     /把后端、数据库、算法刷题、AI 工具与网络安全学习内容整理成可导航、可归档的个人知识库。/
   )
   assert.match(homeHtml, /Learning Portal/)
-  assert.match(homeHtml, /学习入口优先/)
+  assert.match(homeHtml, /课程学习/)
+  assert.match(homeHtml, /杂谈/)
   assert.match(homeHtml, /后端 \/ 算法 \/ AI \/ 网安/)
-  assert.match(homeHtml, /把学习入口、专题笔记和文章归档整理成一个可持续扩展的个人 Wiki。/)
+  assert.doesNotMatch(homeHtml, /可持续扩展的个人 Wiki/)
+  assert.doesNotMatch(homeHtml, /持续整理，长期沉淀/)
+})
+
+test('site chrome uses leftmost home nav and no longer renders search forms in the header', () => {
+  const homeHtml = readExportedFile('index.html')
+
+  assert.match(homeHtml, />首页</)
+  assert.match(homeHtml, />归档</)
+  assert.match(homeHtml, />课程</)
+  assert.match(homeHtml, />杂谈</)
+  assert.doesNotMatch(homeHtml, /action="\/my-blog\/search\/"/)
+  assert.doesNotMatch(homeHtml, /搜索知识入口、博客和安全笔记/)
 })
 
 test('nav page uses the migrated 13-category, 243-site dataset', () => {
@@ -140,7 +183,60 @@ test('home page status panel avoids fake UV\\/PV fallback numbers', () => {
 test('projects page participates in the archive-style list system', () => {
   const projectsHtml = readExportedFile('projects', 'index.html')
 
-  assert.match(projectsHtml, /项目归档/)
-  assert.match(projectsHtml, /个人网站搭建实录/)
-  assert.match(projectsHtml, /Cloudflare 优化规划/)
+  assert.doesNotMatch(projectsHtml, /项目归档/)
+  assert.doesNotMatch(projectsHtml, /Project Notes/)
+  assert.match(projectsHtml, /Local RAG 项目笔记/)
+  assert.match(projectsHtml, /Qwen 安全助手项目笔记/)
+  assert.match(projectsHtml, /\/projects\/page\/2/)
+  assert.match(projectsHtml, /下一页/)
+})
+
+test('project archive pagination exports a second page with older project posts', () => {
+  const projectsPageTwoHtml = readExportedFile('projects', 'page', '2', 'index.html')
+
+  assert.match(projectsPageTwoHtml, /href="\/my-blog\/projects\/"/)
+  assert.match(projectsPageTwoHtml, /上一页/)
+  assert.match(projectsPageTwoHtml, /FastAPI 学习笔记|FastAPI 博客全栈项目笔记/)
+  assert.match(projectsPageTwoHtml, /全栈入门学习笔记|全栈项目入门/)
+})
+
+test('archive-style pages and nav still render card structures after card interaction changes', () => {
+  const blogHtml = readExportedFile('blog', 'index.html')
+  const projectsHtml = readExportedFile('projects', 'index.html')
+  const securityHtml = readExportedFile('security', 'index.html')
+  const talksHtml = readExportedFile('talks', 'index.html')
+  const navHtml = readExportedFile('nav', 'index.html')
+
+  assert.match(blogHtml, /文章归档/)
+  assert.doesNotMatch(blogHtml, /Article Index/)
+  assert.doesNotMatch(securityHtml, /Security Notes/)
+  assert.doesNotMatch(talksHtml, /这里单独收纳课程之外的杂谈内容/)
+  assert.doesNotMatch(projectsHtml, /Projects Archive/)
+  assert.match(navHtml, /学习路线分类/)
+  assert.match(navHtml, /Current Section/)
+})
+
+test('courses page renders the screenshot-style sidebar and blockchain assignment links', () => {
+  const coursesHtml = readExportedFile('courses', 'index.html')
+
+  assert.match(coursesHtml, /课程学习/)
+  assert.match(coursesHtml, /论文写作指导/)
+  assert.match(coursesHtml, /机器学习/)
+  assert.match(coursesHtml, /区块链/)
+  assert.match(coursesHtml, /数据项目实验与分析/)
+  assert.match(coursesHtml, /SHA-256 哈希算法实验说明文档/)
+  assert.match(coursesHtml, /ETH 钱包实验说明/)
+  assert.match(coursesHtml, /NFT 拍卖实验说明/)
+  assert.match(coursesHtml, /椭圆曲线签名实验说明/)
+  assert.doesNotMatch(coursesHtml, /大深专研一课程/)
+  assert.doesNotMatch(coursesHtml, /Course Index/)
+  assert.doesNotMatch(coursesHtml, /内容待补充/)
+})
+
+test('talks section publishes only the two requested internship posts', () => {
+  const talksHtml = readExportedFile('talks', 'index.html')
+
+  assert.match(talksHtml, /华为实习笔试/)
+  assert.match(talksHtml, /荣耀实习笔试/)
+  assert.doesNotMatch(talksHtml, /研一寒假学习计划/)
 })

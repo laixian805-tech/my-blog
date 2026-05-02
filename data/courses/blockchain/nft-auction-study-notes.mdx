@@ -1,0 +1,110 @@
+---
+title: NFT 拍卖实验说明
+date: 2026-04-12
+summary: 基于 Solidity 和 ERC-721 的 NFT 拍卖实验说明，整理拍卖流程、核心合约函数与扩展功能。
+tags:
+  - 课程学习
+  - 区块链
+  - NFT
+authors:
+  - default
+layout: PostLayout
+---
+
+## 实验目的
+
+本实验基于 Solidity 和 ERC-721 标准实现一个带拍卖规则的 NFT 交易合约，并在原始版本基础上继续做功能扩展，让系统不只是“能拍卖”，而是具备更完整的业务流程控制能力。
+
+核心想说明三件事：
+
+1. 智能合约不仅能保存 NFT 所有权，还能约束竞价、结算、取消拍卖等业务规则。
+2. NFT 拍卖的状态变化可以完全写在链上，由合约自动执行。
+3. 区块链实验从“能跑”升级到“更完整”，还包括测试补强和说明文档同步更新。
+
+## 项目主要文件
+
+- `NFTAuction.sol`：核心智能合约，实现 NFT 铸造、拍卖、取消拍卖、最低加价和一口价购买逻辑。
+- `test_nftauction.py`：自动化测试，验证拍卖生命周期和反例场景。
+- `拍卖操作步骤.docx`：Remix 交互操作说明。
+- `NFT拍卖程序智能合约部署步骤.docx`：部署说明。
+
+## 快速启动
+
+### 安装 Python 依赖
+
+```powershell
+cd "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\NFTAuction(1)"
+python -m pip install -r requirements.txt
+```
+
+### 确认 Node.js 与 solc 可用
+
+```powershell
+node -v
+npx solc --version
+```
+
+### 启动可视化演示
+
+这个项目更适合在 Remix 中演示部署、铸造 NFT、开启拍卖、递增竞价、取消拍卖和一口价购买流程。
+
+```powershell
+Start-Process "https://remix.ethereum.org/"
+```
+
+### 运行测试
+
+```powershell
+& "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\.venv_tlx\Scripts\python.exe" -m pytest "C:\Users\tlx\OneDrive\Desktop\wenjian\区块链作业\NFTAuction(1)\test_nftauction.py" -q
+```
+
+## 实验主要流程
+
+### 角色划分
+
+- 管理员：部署合约的人，也是合约拥有者，负责铸造 NFT、开启拍卖、取消拍卖、结束拍卖。
+- 普通用户：参与竞价、执行一口价购买、在没有中标时撤回自己的出价。
+
+### 当前业务流程
+
+1. 管理员部署合约并初始化 NFT 名称和符号。
+2. 管理员调用 `mintERC721Token()` 铸造 NFT。
+3. 管理员调用 `startAuction()` 指定拍卖时长、受益人、底价、最低加价幅度和一口价。
+4. 普通用户可以通过 `bid()` 递增出价，或通过 `buyNow()` 直接购买。
+5. 未中标用户的金额进入 `pendingReturns`，之后可调用 `withdraw()` 取回。
+6. 无人出价时，管理员可调用 `cancelAuction()` 取消拍卖。
+7. 到期后管理员调用 `endAuction()` 完成结拍。
+
+## 核心数据与函数
+
+关键状态包括：
+
+- `tokenIdCounter`
+- `tokenIdList`
+- `auctionNFTList`
+- `tokenIdListOfAccount`
+- `nftAuctionInfo`
+
+关键函数包括：
+
+- `mintERC721Token(address _to)`
+- `startAuction(...)`
+- `bid(uint _tokenId)`
+- `buyNow(uint _tokenId)`
+- `cancelAuction(uint _tokenId)`
+- `withdraw(uint _tokenId)`
+- `endAuction(uint _tokenId)`
+
+## 本次改进前后的主要变化
+
+### 新增取消拍卖
+
+改进前拍卖一旦开启，只能等时间结束后再结拍；改进后新增 `cancelAuction(uint tokenId)`，仅允许管理员在无人出价时取消。
+
+### 引入最低加价幅度
+
+出价不再是“只要更高就行”，而是要求至少满足最小加价门槛，让拍卖规则更完整。
+
+### 补充测试与说明
+
+不只是多写合约函数，还把测试路径与交互说明补上，方便课程展示和复盘。

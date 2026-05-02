@@ -1,9 +1,10 @@
 import { formatDate } from 'pliny/utils/formatDate'
 import type { CoreContent } from 'pliny/utils/contentlayer'
-import type { Blog, SecurityNote } from 'contentlayer/generated'
-import type { Project } from '@/data/projectsData'
+import type { Blog, SecurityNote, Talk } from 'contentlayer/generated'
 
-export type ArchiveSection = 'blog' | 'security' | 'projects'
+export type ArchiveSection = 'blog' | 'security' | 'projects' | 'talks'
+
+export const ARCHIVE_PAGE_SIZE = 10
 
 export type ArchiveListItem = {
   id: string
@@ -39,6 +40,12 @@ export const archiveSectionMeta: Record<
       'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-500/12 dark:text-emerald-200 dark:ring-emerald-500/20',
     accentClassName: 'from-emerald-500/18 via-teal-500/10 to-transparent',
   },
+  talks: {
+    label: 'Talks',
+    badgeClassName:
+      'bg-amber-50 text-amber-700 ring-1 ring-amber-100 dark:bg-amber-500/12 dark:text-amber-200 dark:ring-amber-500/20',
+    accentClassName: 'from-amber-500/18 via-orange-500/10 to-transparent',
+  },
 }
 
 function getYearGroup(dateValue?: string, fallbackLabel = '未分组') {
@@ -71,6 +78,22 @@ export function sortArchiveItems(items: ArchiveListItem[]) {
 
     return left.title.localeCompare(right.title, 'zh-CN')
   })
+}
+
+export function getArchiveTotalPages(totalItems: number, pageSize = ARCHIVE_PAGE_SIZE) {
+  return Math.ceil(totalItems / pageSize)
+}
+
+export function paginateArchiveItems<T>(
+  items: T[],
+  pageNumber: number,
+  pageSize = ARCHIVE_PAGE_SIZE
+) {
+  return items.slice(pageSize * (pageNumber - 1), pageSize * pageNumber)
+}
+
+export function getProjectBlogPosts(posts: CoreContent<Blog>[]) {
+  return posts.filter((post) => post.tags?.includes('项目'))
 }
 
 export function groupArchiveItems(items: ArchiveListItem[]) {
@@ -131,16 +154,30 @@ export function mapSecurityNotesToArchiveItems(notes: CoreContent<SecurityNote>[
   }))
 }
 
-export function mapProjectsToArchiveItems(projects: Project[]) {
-  return projects.map((project) => ({
-    id: project.href || project.title,
-    title: project.title,
-    href: project.href || '/projects',
-    summary: project.description,
+export function mapTalkPostsToArchiveItems(posts: CoreContent<Talk>[], locale: string) {
+  return posts.map((post) => ({
+    id: post.path,
+    title: post.title,
+    href: `/${post.path}`,
+    summary: post.summary || '',
+    section: 'talks' as const,
+    dateLabel: formatDate(post.date, locale),
+    dateValue: post.date,
+    yearGroup: getYearGroup(post.date),
+    tags: post.tags ?? [],
+  }))
+}
+
+export function mapProjectBlogPostsToArchiveItems(posts: CoreContent<Blog>[], locale: string) {
+  return posts.map((post) => ({
+    id: post.path,
+    title: post.title,
+    href: `/${post.path}`,
+    summary: post.summary || '',
     section: 'projects' as const,
-    dateLabel: project.date ? formatDate(project.date, 'zh-CN') : '持续维护',
-    dateValue: project.date,
-    yearGroup: getYearGroup(project.date, '项目归档'),
-    tags: project.tags ?? [],
+    dateLabel: formatDate(post.date, locale),
+    dateValue: post.date,
+    yearGroup: getYearGroup(post.date, '项目'),
+    tags: post.tags ?? [],
   }))
 }

@@ -43,3 +43,19 @@ export function serializeJsonLd(value: unknown) {
     .replace(/\u2028/g, '\\u2028')
     .replace(/\u2029/g, '\\u2029')
 }
+
+export function getPostListLabel(basePath: string) {
+  if (basePath === 'security') {
+    return '返回 Security'
+  }
+
+  if (basePath === 'courses') {
+    return '返回课程学习'
+  }
+
+  if (basePath === 'talks') {
+    return '返回杂谈'
+  }
+
+  return '返回博客列表'
+}

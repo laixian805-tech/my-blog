@@ -1,0 +1,897 @@
+---
+title: 'Qwen 安全助手项目笔记'
+date: '2026-03-29'
+tags: ['项目', 'Qwen', 'LoRA', '网络安全']
+draft: false
+summary: '完整记录从 MiniMind 路线切换到 Qwen 基座模型后，如何做网安方向微调、部署本地 API，并搭起网页前端原型。'
+authors: ['default']
+layout: PostLayout
+---
+# Qwen 安全助手项目笔记
+
+这份笔记记录的是我从 `MiniMind` 小模型实验，切换到现成大模型 `Qwen2.5-3B-Instruct`，并基于 `LLaMA-Factory` 做网络安全方向 `LoRA / QLoRA` 微调、部署本地 API 与网页前端的完整过程。
+
+这次项目的核心目标不是“从 0 训练一个模型”，而是：
+
+1. 选择一个能力更强、可直接使用的开源大模型作为基座。
+2. 用自己整理过的网络安全数据，做一个低成本的领域微调。
+3. 把这个模型部署成本地可聊天、可 API 调用、可网页访问的“网络安全助手原型”。
+
+---
+
+## 1. 项目结论先说清楚
+
+这次项目最后是成功的。
+
+- `Qwen2.5-3B-Instruct` 能在 WSL2 + Ubuntu + GPU 环境下正常加载和推理。
+- 基于自己整理的网络安全数据做 `LoRA / QLoRA` 微调是可行的。
+- 微调后的模型相较于纯基模，在 `SQL 注入、XSS、授权边界、OWASP Top 10、WebShell 排查` 等问题上表现出更明显的领域特征。
+- 模型已经成功部署为：
+  - 终端聊天
+  - 本地 API
+  - 本地网页聊天前端
+
+所以，这个项目已经不只是“训练实验”，而是一个完整的本地 AI 助手原型。
+
+---
+
+## 2. 这个项目和 MiniMind 的本质区别
+
+### 2.1 MiniMind 那条路线是什么
+
+`MiniMind` 做的是：
+
+- 自己的模型结构
+- 自己的训练代码
+- 自己的 `.pth` 权重
+- 从预训练、SFT、LoRA 到 RL 的整条实验链路
+
+更适合做的事是：
+
+- 学习小模型原理
+- 看懂训练代码
+- 做轻量实验
+- 理解 LoRA 是怎么实现的
+
+但它的问题也很明显：
+
+- 模型太小，能力上限低
+- 即使做了网络安全 LoRA，也很容易学歪
+- 在网络安全这种偏专业任务上，容易出现复读、单字母输出、概念混乱、跑题等问题
+
+### 2.2 Qwen 这条路线是什么
+
+`Qwen` 这条路线做的是：
+
+- 直接使用现成强基模
+- 不自己重写训练框架
+- 通过成熟框架做 `QLoRA`
+- 聚焦“把模型调成某个垂直领域助手”
+
+更适合做的事是：
+
+- 快速落地
+- 低成本垂直微调
+- 做 API / Web 前端原型
+- 更接近真实工业开源模型使用方式
+
+### 2.3 一句话区别
+
+- `MiniMind`：更像“从零学会造发动机”
+- `Qwen + LLaMA-Factory`：更像“用成熟发动机改装出一台能用的车”
+
+如果目标是学习原理，MiniMind 很有价值。  
+如果目标是做一个真正可用的网络安全助手原型，Qwen 这条路线更合适。
+
+---
+
+## 3. 环境与目录结构
+
+### 3.1 运行环境
+
+这次项目仍然沿用了之前已经打通 GPU 的环境：
+
+- 宿主系统：Windows
+- 开发环境：WSL2 Ubuntu
+- Python 环境：复用之前 MiniMind 的 `.venv-gpu`
+- GPU：WSL2 中的 NVIDIA GPU
+
+这条路线选择 Ubuntu / WSL2 的原因很现实：
+
+- 之前已经验证过 CUDA、PyTorch、GPU 推理都可用
+- `bitsandbytes`、`transformers`、`accelerate`、`LLaMA-Factory` 这类依赖在 Linux 下更稳
+- 能避免在 Windows 原生 Python 环境里继续踩兼容坑
+
+### 3.2 项目目录
+
+项目目录选在：
+
+```text
+~/projects/qwen-cyber-lora
+```
+
+里面主要分了几层：
+
+```text
+qwen-cyber-lora/
+├── models/               # 基模目录
+├── raw_data/             # 原始数据（预留）
+├── processed_data/       # 清洗、转换后的训练数据
+├── exports/              # 以后导出的完整模型
+├── notes/                # 训练记录（预留）
+├── LLaMA-Factory/        # 框架本体
+└── test_api.py           # 本地 API 调用测试脚本
+```
+
+其中最关键的路径是：
+
+- 基模：
+  `/home/tlx/projects/qwen-cyber-lora/models/Qwen2.5-3B-Instruct`
+- LoRA 输出：
+  `/home/tlx/projects/qwen-cyber-lora/LLaMA-Factory/saves/qwen25-3b-cyber-lora`
+- 训练数据：
+  `/home/tlx/projects/qwen-cyber-lora/processed_data/cyber_alpaca.json`
+
+---
+
+## 4. 选择了什么基模，为什么
+
+这次选择的是：
+
+- `Qwen/Qwen2.5-3B-Instruct`
+
+官方模型卡：
+
+- [https://huggingface.co/Qwen/Qwen2.5-3B-Instruct](https://huggingface.co/Qwen/Qwen2.5-3B-Instruct)
+
+选择它的原因：
+
+1. 中文能力比 MiniMind 强很多。
+2. 体量比 `7B/8B` 更适合当前 `8GB` 左右显存的机器。
+3. 已经是指令微调过的模型，开箱就能聊天。
+4. 对 `LoRA / QLoRA` 的支持成熟。
+
+当时也考虑过：
+
+- `Qwen2.5-7B-Instruct`
+- `Qwen3-4B`
+- `Llama 3.1 8B`
+
+但对当前机器来说，`Qwen2.5-3B-Instruct` 是更稳的第一步。
+
+---
+
+## 5. 安装了什么框架，为什么
+
+这次没有再像 MiniMind 一样直接用自己写的训练脚本，而是用了：
+
+- `LLaMA-Factory`
+
+项目链接：
+
+- [https://github.com/hiyouga/LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory)
+
+文档：
+
+- 安装：[https://llamafactory.readthedocs.io/en/latest/getting_started/installation.html](https://llamafactory.readthedocs.io/en/latest/getting_started/installation.html)
+- 数据：[https://llamafactory.readthedocs.io/en/latest/getting_started/data_preparation.html](https://llamafactory.readthedocs.io/en/latest/getting_started/data_preparation.html)
+- 推理：[https://llamafactory.readthedocs.io/en/latest/getting_started/inference.html](https://llamafactory.readthedocs.io/en/latest/getting_started/inference.html)
+- WebUI：[https://llamafactory.readthedocs.io/en/latest/getting_started/webui.html](https://llamafactory.readthedocs.io/en/latest/getting_started/webui.html)
+
+选择它的原因：
+
+1. 能直接支持现成大模型。
+2. 原生支持 LoRA / QLoRA。
+3. 训练、聊天、API、WebUI、导出是一整套。
+4. 社区文档比较齐全。
+5. 对第一次接触开源大模型部署来说，门槛比自己写训练逻辑低很多。
+
+安装时踩过一个坑：
+
+- 一开始在系统 Python 里直接 `pip install -e .`
+- Ubuntu 报了 `externally-managed-environment`
+
+最后解决方式：
+
+- 先激活已有的虚拟环境：
+  `/home/tlx/projects/minimind/.venv-gpu`
+- 再在这个环境里安装 `LLaMA-Factory`
+
+---
+
+## 6. 模型下载过程
+
+模型最终是用 `hf download` 下载的，而不是 `huggingface-cli`。
+
+原因是：
+
+- 环境里没有 `huggingface-cli`
+- 实际可用的是 `hf` 命令
+
+正确下载方式：
+
+```bash
+hf download Qwen/Qwen2.5-3B-Instruct \
+  --local-dir /home/tlx/projects/qwen-cyber-lora/models/Qwen2.5-3B-Instruct
+```
+
+下载完成后，本地模型目录大约有 `5.8GB` 左右，包括：
+
+- `config.json`
+- `generation_config.json`
+- `tokenizer.json`
+- `model-00001-of-00002.safetensors`
+- `model-00002-of-00002.safetensors`
+
+这说明：
+
+- 这是一个标准 Hugging Face 模型目录
+- 不是 `.pth`，也不是自己定义结构的原生 PyTorch 权重
+
+---
+
+## 7. 先验证基模能聊天
+
+在真正做 LoRA 微调前，先做了一件非常重要的事：
+
+- 验证基模本身能不能正常加载和聊天
+
+做法是创建基础聊天配置：
+
+```yaml
+model_name_or_path: /home/tlx/projects/qwen-cyber-lora/models/Qwen2.5-3B-Instruct
+template: qwen
+infer_backend: huggingface
+```
+
+然后执行：
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli chat examples/my_configs/qwen25_3b_base_chat.yaml
+```
+
+测试过的问题包括：
+
+- `2+3*4 等于多少`
+- `请解释什么是 SQL 注入`
+- `把“今天天气很好”翻译成英文`
+
+基模表现正常，说明：
+
+1. 模型下载没问题
+2. GPU 推理没问题
+3. 框架能正常使用
+
+这一步非常重要，因为它把：
+
+- 模型问题
+- 环境问题
+- 数据问题
+
+先分离开了。
+
+---
+
+## 8. 训练数据是怎么来的
+
+这次微调使用的数据，不是原始数据直接拿来训，而是经过了几层处理。
+
+### 8.1 原始来源
+
+原始来源是 Hugging Face 上的网络安全数据集：
+
+- `hcnote/Cybersecurity-High-Quality-Dataset`
+
+这是一个大问答类数据集，覆盖网络安全概念、漏洞、防护、开发者建议等内容。
+
+### 8.2 第一轮转换
+
+先把这份数据集转成 MiniMind 能吃的 `conversations` 格式：
+
+- 脚本：
+  [build_pentest_lora.py](/home/tlx/projects/minimind/dataset/build_pentest_lora.py)
+- 输出：
+  [pentest_lora.jsonl](/home/tlx/projects/minimind/dataset/pentest_lora.jsonl)
+
+这一步顺便做了：
+
+- 去空样本
+- 去重复
+- 去模板残留
+- 过滤一部分明显偏武器化的双用途样本
+
+### 8.3 第二轮精筛
+
+由于第一版数据过杂，在 MiniMind 上试出来效果很差，于是又做了一轮更严格的精筛：
+
+- 脚本：
+  [filter_pentest_lora.py](/home/tlx/projects/minimind/dataset/filter_pentest_lora.py)
+- 输出：
+  [pentest_lora_curated.jsonl](/home/tlx/projects/minimind/dataset/pentest_lora_curated.jsonl)
+
+它会重点过滤：
+
+- 单字母答案（A/B/C/D）
+- 英文主导样本
+- 明显复读样本
+- 明显脏模式
+- 一部分双用途内容
+
+### 8.4 第三轮格式迁移
+
+`LLaMA-Factory` 不直接吃 MiniMind 的 `conversations` 格式，所以又把它转成了 `Alpaca` 风格：
+
+```json
+{
+  "instruction": "...",
+  "input": "",
+  "output": "...",
+  "system": "..."
+}
+```
+
+最终得到：
+
+```text
+/home/tlx/projects/qwen-cyber-lora/processed_data/cyber_alpaca.json
+```
+
+这才是最后真正用于 `Qwen` LoRA 训练的数据。
+
+一句话总结：
+
+这次训练使用的是：
+
+**原始网络安全大数据集 -> MiniMind 风格转换 -> 精筛 -> Alpaca 格式转换**  
+
+之后得到的一份更适合小显存 LoRA 微调的精简版数据。
+
+---
+
+## 9. 为什么不直接用原始大数据
+
+这个问题很重要。
+
+### 9.1 时间成本
+
+如果一开始直接用原始数据：
+
+- 样本更多
+- token 更多
+- 训练时间肯定更长
+- 显存压力也会更大
+
+在当前机器上，这会明显拖慢实验迭代。
+
+### 9.2 质量风险
+
+原始数据集不一定完全适合当前目标。
+
+比如它可能混有：
+
+- 选择题
+- 风格不统一的英文样本
+- 单字母答案
+- 过于武器化的 exploit/payload 内容
+- 和企业开发/防御不完全匹配的样本
+
+这些东西在小模型或较轻量 LoRA 上，很容易把模型“带歪”。
+
+MiniMind 项目里那次失败，已经说明了这个问题：
+
+- 模型开始输出 `C` / `D`
+- 严重复读
+- 中英混杂
+- 答案结构崩掉
+
+### 9.3 为什么清洗后通常更好
+
+清洗后的数据通常更适合当前目标，原因在于：
+
+1. **分布更一致**  
+   模型更容易学到统一风格
+
+2. **目标更明确**  
+   你要的是“中文网络安全助手”，不是泛安全问答、不是选择题模型、也不是 exploit 生成器
+
+3. **噪声更少**  
+   垃圾样本少了，有限训练步数就更能用于有效学习
+
+4. **更符合模型容量**  
+   3B 模型虽然比 MiniMind 强很多，但仍不是无限大，数据质量依然很关键
+
+### 9.4 怎么判断清洗后的数据比原始数据更好
+
+不是看“条数更多”，而是看：
+
+- 基模 + LoRA 后是否更稳定
+- 是否更少复读
+- 是否更少单字母输出
+- 是否更符合你设定的角色
+- 是否在你的测试题上回答更专业
+
+也就是说，最终标准不是“数据更大”，而是：
+
+**训练后模型是否更接近你想要的输出行为。**
+
+---
+
+## 10. 数据注册与框架配置
+
+为了让 `LLaMA-Factory` 能认识这份数据，需要做两件事。
+
+### 10.1 把数据复制进框架数据目录
+
+```text
+/home/tlx/projects/qwen-cyber-lora/LLaMA-Factory/data/cyber_alpaca.json
+```
+
+### 10.2 修改 `dataset_info.json`
+
+文件位置：
+
+```text
+/home/tlx/projects/qwen-cyber-lora/LLaMA-Factory/data/dataset_info.json
+```
+
+加入注册项：
+
+```json
+"cyber_alpaca": {
+  "file_name": "cyber_alpaca.json",
+  "columns": {
+    "prompt": "instruction",
+    "query": "input",
+    "response": "output",
+    "system": "system"
+  }
+}
+```
+
+这一步的意义是：
+
+- 告诉框架数据叫什么
+- 告诉框架每个字段分别代表什么
+
+如果没有这一步，训练框架就不知道怎么解析这份数据。
+
+---
+
+## 11. 训练配置文件是怎么设计的
+
+这次 LoRA 训练的核心配置文件是：
+
+```text
+/home/tlx/projects/qwen-cyber-lora/LLaMA-Factory/examples/my_configs/qwen25_3b_cyber_lora.yaml
+```
+
+里面最关键的几项是：
+
+### 11.1 模型部分
+
+```yaml
+model_name_or_path: /home/tlx/projects/qwen-cyber-lora/models/Qwen2.5-3B-Instruct
+trust_remote_code: true
+```
+
+表示使用本地下载好的 Qwen 模型。
+
+### 11.2 微调方法部分
+
+```yaml
+finetuning_type: lora
+quantization_bit: 4
+lora_target: all
+```
+
+这表示：
+
+- 使用 LoRA
+- 用 4bit 量化方式加载基模
+- 尽量覆盖所有目标线性层
+
+这本质上就是 `QLoRA`。
+
+### 11.3 数据部分
+
+```yaml
+dataset: cyber_alpaca
+template: qwen
+cutoff_len: 768
+max_samples: 3000
+```
+
+表示：
+
+- 使用刚刚注册的数据集
+- 用 Qwen 模板
+- 最大输入长度先控制在 768
+- 先只取 3000 条样本做第一轮验证
+
+### 11.4 训练部分
+
+```yaml
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 8
+learning_rate: 2.0e-4
+num_train_epochs: 2.0
+```
+
+这套参数的设计思路是：
+
+- 显存优先，先稳住
+- 允许 batch 很小
+- 用梯度累积补回来
+- 先做 2 epoch 验证效果
+
+---
+
+## 12. 训练过程中踩过的坑
+
+### 12.1 系统 Python 无法直接安装
+
+报错：
+
+- `externally-managed-environment`
+
+原因：
+
+- Ubuntu 默认不允许直接往系统 Python 里乱装包
+
+解决：
+
+- 使用已有虚拟环境 `.venv-gpu`
+
+### 12.2 `huggingface_hub` 升级过头
+
+一度把 `huggingface_hub` 升到了 `1.8.0`，导致：
+
+- 和 `transformers 4.57.6` 冲突
+
+最后修回：
+
+- `huggingface_hub 0.36.2`
+
+### 12.3 缺 `bitsandbytes`
+
+由于配置里用了：
+
+```yaml
+quantization_bit: 4
+```
+
+所以训练时会要求：
+
+- `bitsandbytes`
+
+解决方式：
+
+```bash
+pip install "bitsandbytes>=0.39.0"
+```
+
+### 12.4 断点续训参数写法踩坑
+
+一开始误以为命令行应该写：
+
+```bash
+--resume_from_checkpoint xxx
+```
+
+但当前版本 `LLaMA-Factory` 的 CLI 覆盖参数写法实际上更接近：
+
+```bash
+resume_from_checkpoint=xxx
+```
+
+这是框架参数解析方式导致的。
+
+---
+
+## 13. 训练过程到底发生了什么
+
+训练命令是：
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/my_configs/qwen25_3b_cyber_lora.yaml
+```
+
+它做的事情是：
+
+1. 加载 tokenizer
+2. 加载 Qwen 基模
+3. 以 4bit 量化形式放进显存
+4. 挂上 LoRA 适配器
+5. 加载 `cyber_alpaca` 数据
+6. tokenize 数据
+7. 开始前向 / 反向 / 参数更新
+8. 定期保存 checkpoint
+
+训练日志中最关键的信息包括：
+
+- 总参数量约 `31亿`
+- 真正训练参数约 `1496万`
+- `trainable% ≈ 0.48`
+
+这说明：
+
+- 基模绝大部分参数不动
+- 只训练了很小一部分 LoRA 参数
+
+这正是 LoRA 的核心思想。
+
+---
+
+## 14. 最终训练结果
+
+训练最终完成时的关键指标是：
+
+- `train_runtime ≈ 2282 秒`
+- `train_loss ≈ 1.1005`
+- `epoch = 2.0`
+
+中途 loss 整体呈下降趋势，没有出现：
+
+- NaN
+- 显著发散
+- 训练中断
+
+说明这次训练是健康的。
+
+输出目录在：
+
+```text
+/home/tlx/projects/qwen-cyber-lora/LLaMA-Factory/saves/qwen25-3b-cyber-lora
+```
+
+这个目录里保存的是：
+
+- LoRA adapter
+- tokenizer 相关配置
+- chat template
+- 训练日志图
+
+注意：
+
+这不是完整模型，而是 **LoRA 增量参数目录**。
+
+---
+
+## 15. 微调后和基模相比有什么区别
+
+基模本身已经能：
+
+- 基础聊天
+- 一般问答
+- 翻译
+- 常见推理
+
+LoRA 的作用不是把它变成一个完全不同的模型，而是：
+
+- 让它在网络安全方向更专业
+- 更容易输出符合你想要的安全助手风格
+- 更关注授权边界、防御建议、术语解释、结构化回答
+
+一句话理解：
+
+- 基模像一个“通用大学生”
+- LoRA 像给它上了一门“网络安全方向强化班”
+
+---
+
+## 16. 微调后的效果验证
+
+训练完成后，基于：
+
+```text
+/home/tlx/projects/qwen-cyber-lora/LLaMA-Factory/examples/my_configs/qwen25_3b_cyber_infer.yaml
+```
+
+做了推理测试。
+
+测试的问题包括：
+
+- SQL 注入定义与防护
+- XSS 分类
+- 渗透测试授权边界
+- OWASP Top 10 学习建议
+- WebShell 排查思路
+
+结果表明：
+
+1. 回答明显带有网络安全领域特征
+2. 不再像 MiniMind 那次一样出现严重复读和崩坏
+3. 在概念解释、防护建议、合规边界这些方面表现较稳定
+
+这说明：
+
+**这次 LoRA 是有效的，而且值得保留。**
+
+---
+
+## 17. API 与 Web 前端是怎么连起来的
+
+### 17.1 后端 API
+
+通过：
+
+```bash
+llamafactory-cli api examples/my_configs/qwen25_3b_cyber_infer.yaml
+```
+
+启动本地模型服务。
+
+服务地址：
+
+```text
+http://127.0.0.1:8000/v1
+```
+
+这个服务负责：
+
+- 接收问题
+- 调用模型推理
+- 返回结果
+
+### 17.2 命令行前端
+
+自己还写了一个：
+
+```text
+/home/tlx/projects/qwen-cyber-lora/test_api.py
+```
+
+它本质上是一个本地 API 客户端。
+
+作用：
+
+- 从终端输入问题
+- 把问题发给本地 API
+- 再把回答打印出来
+
+### 17.3 Web 前端
+
+通过：
+
+```bash
+llamafactory-cli webchat examples/my_configs/qwen25_3b_cyber_infer.yaml
+```
+
+启动网页聊天界面。
+
+网页地址：
+
+```text
+http://localhost:7860
+```
+
+这里前端负责：
+
+- 提供输入框
+- 展示聊天记录
+
+真正推理仍然是后端模型完成的。
+
+### 17.4 一句话结构图
+
+```text
+浏览器 / test_api.py
+        ↓
+本地 API / webchat 前端
+        ↓
+Qwen2.5-3B-Instruct 基模 + LoRA adapter
+        ↓
+GPU 推理
+```
+
+---
+
+## 18. 为什么说这个项目已经有“利用价值”
+
+这个项目的价值已经不只是“训练成功了”。
+
+它现在至少具备这些价值：
+
+### 18.1 作为本地安全助手原型
+
+你已经拥有：
+
+- 大模型基座
+- 安全领域 LoRA
+- API
+- 网页前端
+
+这已经是一套完整原型。
+
+### 18.2 作为 LoRA 数据实验平台
+
+后面你只要换：
+
+- 数据集
+- 配置文件
+
+就能继续做：
+
+- 更强调防御方向的 LoRA
+- 更强调日志分析方向的 LoRA
+- 更强调开发者安全建议方向的 LoRA
+
+### 18.3 作为学习成熟开源模型落地的练手项目
+
+通过这次过程，已经把：
+
+- 模型下载
+- 数据清洗
+- 数据迁移
+- dataset 注册
+- LoRA / QLoRA 训练
+- API 部署
+- Web 前端
+
+这一整套主流链路都走通了。
+
+这比继续在 MiniMind 里硬拧一个小模型更接近真实实践。
+
+---
+
+## 19. 如果重新来一次，我会怎么优化
+
+如果以后继续做第二版，我会重点改这几个方向：
+
+### 19.1 数据更聚焦
+
+进一步增加：
+
+- 中文网络安全工程实践
+- 防御建议
+- 合规边界
+- 企业开发安全清单
+
+减少：
+
+- 过于教材化的大段复述
+- 英文比例偏高样本
+- 与目标助手角色不一致的问答
+
+### 19.2 做基模 vs LoRA 的正式对比实验
+
+不是只看“感觉好像更专业了”，而是系统比较：
+
+- 准确性
+- 结构化
+- 合规性
+- 稳定性
+
+### 19.3 再考虑更大模型
+
+如果硬件允许，下一步可以考虑：
+
+- `Qwen2.5-7B-Instruct`
+
+但当前这次 `3B` 路线已经证明：
+
+- 方向是对的
+- 不是必须一开始就上更大模型
+
+---
+
+## 20. 最后一句总结
+
+这次 Qwen 安全助手项目，和之前 MiniMind 最大的不同在于：
+
+- MiniMind 更像“学习怎么从零造模型”
+- Qwen 安全助手更像“学习怎么把现成开源大模型真正变成一个可用原型”
+
+这次项目已经完成了：
+
+- 基模选择
+- 数据清洗
+- LoRA 微调
+- 本地 API 部署
+- 本地网页聊天
+
+如果以后还要继续做，这一版完全可以作为：
+
+**`Qwen 安全助手 v1`**
+
+来保留和迭代。

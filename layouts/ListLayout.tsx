@@ -28,10 +28,9 @@ export default function ListLayout({
   return (
     <ArchiveCollection
       title={title}
-      eyebrow="Blog Archive"
-      description="按时间把公开文章整理成统一归档，方便顺着主题和年份持续回看。"
       items={items}
       emptyMessage="还没有发布文章。"
+      compactHoverDetails
       pagination={
         pagination
           ? {
