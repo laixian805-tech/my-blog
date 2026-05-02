@@ -21,31 +21,76 @@ const socialItems: Array<{ kind: SocialKind; href: string }> = [
 
 export default function Footer() {
   return (
-    <footer>
-      <div className="mt-16 flex flex-col items-center">
-        {socialItems.length > 0 && (
-          <div className="mb-3 flex space-x-4">
-            {socialItems.map((item) => (
-              <SocialIcon
-                key={`${item.kind}-${item.href}`}
-                kind={item.kind}
-                href={item.href}
-                size={6}
-              />
-            ))}
+    <footer className="mt-16 pb-10">
+      <div className="rounded-[32px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(236,253,245,0.9))] p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.35)] sm:p-8 dark:border-gray-800 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.96),rgba(6,23,23,0.98))]">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-3">
+            <p className="text-xs font-semibold tracking-[0.22em] text-emerald-700 uppercase dark:text-emerald-300">
+              {siteMetadata.homePortalLabel}
+            </p>
+            <h2 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+              {siteMetadata.title}
+            </h2>
+            <p className="text-sm leading-7 text-slate-600 dark:text-slate-300">
+              把学习入口、专题笔记和文章归档整理成一个可持续扩展的个人 Wiki。
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {siteMetadata.homeProfileTagline}
+            </p>
           </div>
-        )}
 
-        <div className="mb-2 flex flex-wrap items-center justify-center gap-x-2 text-sm text-gray-500 dark:text-gray-400">
-          <span>{siteMetadata.author}</span>
-          <span>·</span>
-          <span>&copy; {new Date().getFullYear()}</span>
-          <span>·</span>
-          <Link href="/">{siteMetadata.title}</Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/nav"
+              className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-emerald-300"
+            >
+              <span>学习导航</span>
+              <span aria-hidden="true">&rarr;</span>
+            </Link>
+            <Link
+              href="/blog"
+              className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 dark:border-emerald-500/20 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-emerald-500/50 dark:hover:text-emerald-300"
+            >
+              <span>文章归档</span>
+              <span aria-hidden="true">&rarr;</span>
+            </Link>
+            <Link
+              href="/security"
+              className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 dark:border-emerald-500/20 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-emerald-500/50 dark:hover:text-emerald-300"
+            >
+              <span>安全专题</span>
+              <span aria-hidden="true">&rarr;</span>
+            </Link>
+          </div>
         </div>
 
-        <div className="mb-8 text-sm text-gray-500 dark:text-gray-400">
-          使用 Next.js、MDX 和 Tailwind CSS 构建
+        <div className="mt-8 flex flex-col gap-5 border-t border-slate-200/80 pt-6 lg:flex-row lg:items-center lg:justify-between dark:border-gray-800">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>{siteMetadata.author}</span>
+            <span>·</span>
+            <span>&copy; {new Date().getFullYear()}</span>
+            <span>·</span>
+            <Link href="/">{siteMetadata.title}</Link>
+            <span>·</span>
+            <span>Next.js + MDX + Tailwind CSS</span>
+          </div>
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            {socialItems.length > 0 && (
+              <div className="flex items-center gap-3">
+                {socialItems.map((item) => (
+                  <SocialIcon
+                    key={`${item.kind}-${item.href}`}
+                    kind={item.kind}
+                    href={item.href}
+                    size={5}
+                  />
+                ))}
+              </div>
+            )}
+
+            <div className="text-sm text-slate-500 dark:text-slate-400">持续整理，长期沉淀。</div>
+          </div>
         </div>
       </div>
     </footer>

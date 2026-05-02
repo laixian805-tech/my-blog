@@ -1,17 +1,9 @@
-import siteMetadata from '@/data/siteMetadata'
-
 function getConfiguredBasePath() {
+  // Runtime asset URLs should follow Next's actual basePath.
+  // Inferring a prefix from the canonical site URL breaks local dev when
+  // the production site is hosted under a subpath like /my-blog.
   const envBasePath = process.env.BASE_PATH?.replace(/\/$/, '')
-  if (envBasePath) {
-    return envBasePath === '/' ? '' : envBasePath
-  }
-
-  try {
-    const pathname = new URL(siteMetadata.siteUrl).pathname.replace(/\/$/, '')
-    return pathname === '/' ? '' : pathname
-  } catch {
-    return ''
-  }
+  return envBasePath && envBasePath !== '/' ? envBasePath : ''
 }
 
 export function getSitePathPrefix() {

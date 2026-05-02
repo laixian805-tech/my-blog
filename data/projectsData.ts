@@ -1,8 +1,10 @@
-interface Project {
+export interface Project {
   title: string
   description: string
   href?: string
   imgSrc?: string
+  date?: string
+  tags?: string[]
 }
 
 const projectsData: Project[] = [

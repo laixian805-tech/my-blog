@@ -13,27 +13,42 @@ function getCategoryAccentClasses(categoryId: string, active: boolean) {
     all: active
       ? 'bg-sky-100 text-sky-600 ring-1 ring-sky-200 dark:bg-sky-500/20 dark:text-sky-200 dark:ring-sky-500/30'
       : 'bg-sky-50 text-sky-600 ring-1 ring-sky-100 dark:bg-sky-500/12 dark:text-sky-300 dark:ring-sky-500/20',
-    algorithm: active
+    Forum: active
       ? 'bg-violet-100 text-violet-600 ring-1 ring-violet-200 dark:bg-violet-500/20 dark:text-violet-200 dark:ring-violet-500/30'
       : 'bg-violet-50 text-violet-600 ring-1 ring-violet-100 dark:bg-violet-500/12 dark:text-violet-300 dark:ring-violet-500/20',
-    backend: active
+    TargetDrones: active
       ? 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-200 dark:ring-emerald-500/30'
       : 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-500/12 dark:text-emerald-300 dark:ring-emerald-500/20',
-    ai: active
+    SlackOff: active
       ? 'bg-fuchsia-100 text-fuchsia-600 ring-1 ring-fuchsia-200 dark:bg-fuchsia-500/20 dark:text-fuchsia-200 dark:ring-fuchsia-500/30'
       : 'bg-fuchsia-50 text-fuchsia-600 ring-1 ring-fuchsia-100 dark:bg-fuchsia-500/12 dark:text-fuchsia-300 dark:ring-fuchsia-500/20',
-    job: active
+    ToolChain: active
       ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/20 dark:text-amber-200 dark:ring-amber-500/30'
       : 'bg-amber-50 text-amber-700 ring-1 ring-amber-100 dark:bg-amber-500/12 dark:text-amber-300 dark:ring-amber-500/20',
-    security: active
+    VulnerabilityDatabase: active
       ? 'bg-rose-100 text-rose-600 ring-1 ring-rose-200 dark:bg-rose-500/20 dark:text-rose-200 dark:ring-rose-500/30'
       : 'bg-rose-50 text-rose-600 ring-1 ring-rose-100 dark:bg-rose-500/12 dark:text-rose-300 dark:ring-rose-500/20',
-    community: active
+    meme: active
       ? 'bg-cyan-100 text-cyan-600 ring-1 ring-cyan-200 dark:bg-cyan-500/20 dark:text-cyan-200 dark:ring-cyan-500/30'
       : 'bg-cyan-50 text-cyan-600 ring-1 ring-cyan-100 dark:bg-cyan-500/12 dark:text-cyan-300 dark:ring-cyan-500/20',
-    tools: active
+    AI: active
       ? 'bg-orange-100 text-orange-600 ring-1 ring-orange-200 dark:bg-orange-500/20 dark:text-orange-200 dark:ring-orange-500/30'
       : 'bg-orange-50 text-orange-600 ring-1 ring-orange-100 dark:bg-orange-500/12 dark:text-orange-300 dark:ring-orange-500/20',
+    Server: active
+      ? 'bg-teal-100 text-teal-700 ring-1 ring-teal-200 dark:bg-teal-500/20 dark:text-teal-200 dark:ring-teal-500/30'
+      : 'bg-teal-50 text-teal-700 ring-1 ring-teal-100 dark:bg-teal-500/12 dark:text-teal-300 dark:ring-teal-500/20',
+    CampusWelfare: active
+      ? 'bg-lime-100 text-lime-700 ring-1 ring-lime-200 dark:bg-lime-500/20 dark:text-lime-200 dark:ring-lime-500/30'
+      : 'bg-lime-50 text-lime-700 ring-1 ring-lime-100 dark:bg-lime-500/12 dark:text-lime-300 dark:ring-lime-500/20',
+    papers: active
+      ? 'bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200 dark:bg-indigo-500/20 dark:text-indigo-200 dark:ring-indigo-500/30'
+      : 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100 dark:bg-indigo-500/12 dark:text-indigo-300 dark:ring-indigo-500/20',
+    gowork: active
+      ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/20 dark:text-amber-200 dark:ring-amber-500/30'
+      : 'bg-amber-50 text-amber-700 ring-1 ring-amber-100 dark:bg-amber-500/12 dark:text-amber-300 dark:ring-amber-500/20',
+    Information: active
+      ? 'bg-slate-200 text-slate-700 ring-1 ring-slate-300 dark:bg-slate-700/50 dark:text-slate-100 dark:ring-slate-600'
+      : 'bg-slate-100 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700',
   } as const
 
   return toneMap[categoryId as keyof typeof toneMap] ?? toneMap.all
@@ -46,18 +61,28 @@ function getCategoryBadgeClasses(categoryId: string) {
 function getCategorySiteIconClasses(categoryId: string) {
   const toneMap = {
     all: 'bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow-[0_14px_28px_-18px_rgba(14,165,233,0.85)]',
-    algorithm:
+    Forum:
       'bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-[0_14px_28px_-18px_rgba(168,85,247,0.85)]',
-    backend:
+    TargetDrones:
       'bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-[0_14px_28px_-18px_rgba(16,185,129,0.85)]',
-    ai: 'bg-gradient-to-br from-fuchsia-500 to-pink-500 text-white shadow-[0_14px_28px_-18px_rgba(217,70,239,0.85)]',
-    job: 'bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-[0_14px_28px_-18px_rgba(245,158,11,0.9)]',
-    security:
+    SlackOff:
+      'bg-gradient-to-br from-fuchsia-500 to-pink-500 text-white shadow-[0_14px_28px_-18px_rgba(217,70,239,0.85)]',
+    ToolChain:
+      'bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-[0_14px_28px_-18px_rgba(245,158,11,0.9)]',
+    VulnerabilityDatabase:
       'bg-gradient-to-br from-rose-500 to-red-500 text-white shadow-[0_14px_28px_-18px_rgba(244,63,94,0.85)]',
-    community:
-      'bg-gradient-to-br from-cyan-500 to-sky-500 text-white shadow-[0_14px_28px_-18px_rgba(6,182,212,0.85)]',
-    tools:
-      'bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-[0_14px_28px_-18px_rgba(249,115,22,0.85)]',
+    meme: 'bg-gradient-to-br from-cyan-500 to-sky-500 text-white shadow-[0_14px_28px_-18px_rgba(6,182,212,0.85)]',
+    AI: 'bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-[0_14px_28px_-18px_rgba(249,115,22,0.85)]',
+    Server:
+      'bg-gradient-to-br from-teal-500 to-cyan-500 text-white shadow-[0_14px_28px_-18px_rgba(20,184,166,0.85)]',
+    CampusWelfare:
+      'bg-gradient-to-br from-lime-500 to-emerald-500 text-white shadow-[0_14px_28px_-18px_rgba(132,204,22,0.85)]',
+    papers:
+      'bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-[0_14px_28px_-18px_rgba(99,102,241,0.85)]',
+    gowork:
+      'bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-[0_14px_28px_-18px_rgba(245,158,11,0.9)]',
+    Information:
+      'bg-gradient-to-br from-slate-600 to-slate-800 text-white shadow-[0_14px_28px_-18px_rgba(51,65,85,0.85)]',
   } as const
 
   return toneMap[categoryId as keyof typeof toneMap] ?? toneMap.all
@@ -66,18 +91,28 @@ function getCategorySiteIconClasses(categoryId: string) {
 function getCategoryExternalClasses(categoryId: string) {
   const toneMap = {
     all: 'text-sky-300 group-hover:text-sky-500 dark:text-sky-400/80 dark:group-hover:text-sky-300',
-    algorithm:
+    Forum:
       'text-violet-300 group-hover:text-violet-500 dark:text-violet-400/80 dark:group-hover:text-violet-300',
-    backend:
+    TargetDrones:
       'text-emerald-300 group-hover:text-emerald-500 dark:text-emerald-400/80 dark:group-hover:text-emerald-300',
-    ai: 'text-fuchsia-300 group-hover:text-fuchsia-500 dark:text-fuchsia-400/80 dark:group-hover:text-fuchsia-300',
-    job: 'text-amber-300 group-hover:text-amber-500 dark:text-amber-400/80 dark:group-hover:text-amber-300',
-    security:
+    SlackOff:
+      'text-fuchsia-300 group-hover:text-fuchsia-500 dark:text-fuchsia-400/80 dark:group-hover:text-fuchsia-300',
+    ToolChain:
+      'text-amber-300 group-hover:text-amber-500 dark:text-amber-400/80 dark:group-hover:text-amber-300',
+    VulnerabilityDatabase:
       'text-rose-300 group-hover:text-rose-500 dark:text-rose-400/80 dark:group-hover:text-rose-300',
-    community:
-      'text-cyan-300 group-hover:text-cyan-500 dark:text-cyan-400/80 dark:group-hover:text-cyan-300',
-    tools:
-      'text-orange-300 group-hover:text-orange-500 dark:text-orange-400/80 dark:group-hover:text-orange-300',
+    meme: 'text-cyan-300 group-hover:text-cyan-500 dark:text-cyan-400/80 dark:group-hover:text-cyan-300',
+    AI: 'text-orange-300 group-hover:text-orange-500 dark:text-orange-400/80 dark:group-hover:text-orange-300',
+    Server:
+      'text-teal-300 group-hover:text-teal-500 dark:text-teal-400/80 dark:group-hover:text-teal-300',
+    CampusWelfare:
+      'text-lime-300 group-hover:text-lime-500 dark:text-lime-400/80 dark:group-hover:text-lime-300',
+    papers:
+      'text-indigo-300 group-hover:text-indigo-500 dark:text-indigo-400/80 dark:group-hover:text-indigo-300',
+    gowork:
+      'text-amber-300 group-hover:text-amber-500 dark:text-amber-400/80 dark:group-hover:text-amber-300',
+    Information:
+      'text-slate-300 group-hover:text-slate-500 dark:text-slate-400/80 dark:group-hover:text-slate-200',
   } as const
 
   return toneMap[categoryId as keyof typeof toneMap] ?? toneMap.all
@@ -255,8 +290,14 @@ function CategoryList({
   )
 }
 
-export default function NavPortal() {
-  const [activeCategoryId, setActiveCategoryId] = useState('all')
+export default function NavPortal({ initialCategoryId = 'all' }: { initialCategoryId?: string }) {
+  const normalizedCategoryId = portalCategories.some(
+    (category) => category.id === initialCategoryId
+  )
+    ? initialCategoryId
+    : 'all'
+
+  const [activeCategoryId, setActiveCategoryId] = useState(normalizedCategoryId)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const activeCategory =

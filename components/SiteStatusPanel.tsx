@@ -7,8 +7,8 @@ const systemSansStyle = {
 }
 
 type SiteStatusPanelProps = {
-  fallbackUv: number
-  fallbackPv: number
+  initialUv: number | null
+  initialPv: number | null
   lastUpdated: string
   enableLiveStats: boolean
 }
@@ -37,13 +37,17 @@ function readBusuanziValue(id: string) {
 }
 
 export default function SiteStatusPanel({
-  fallbackUv,
-  fallbackPv,
+  initialUv,
+  initialPv,
   lastUpdated,
   enableLiveStats,
 }: SiteStatusPanelProps) {
-  const [uvValue, setUvValue] = useState<string>(() => String(fallbackUv))
-  const [pvValue, setPvValue] = useState<string>(() => String(fallbackPv))
+  const [uvValue, setUvValue] = useState<string | null>(() =>
+    initialUv == null ? null : String(initialUv)
+  )
+  const [pvValue, setPvValue] = useState<string | null>(() =>
+    initialPv == null ? null : String(initialPv)
+  )
 
   useEffect(() => {
     if (!enableLiveStats) {
@@ -68,8 +72,8 @@ export default function SiteStatusPanel({
     }
 
     const applyFallbackStats = () => {
-      setUvValue(String(fallbackUv))
-      setPvValue(String(fallbackPv))
+      setUvValue(initialUv == null ? null : String(initialUv))
+      setPvValue(initialPv == null ? null : String(initialPv))
     }
 
     applyFallbackStats()
@@ -117,10 +121,10 @@ export default function SiteStatusPanel({
       window.clearTimeout(fallbackTimer)
       script.remove()
     }
-  }, [enableLiveStats, fallbackPv, fallbackUv])
+  }, [enableLiveStats, initialPv, initialUv])
 
-  const uvText = `${uvValue} 位朋友`
-  const pvText = `${pvValue} 次`
+  const uvText = uvValue ? `${uvValue} 位朋友` : enableLiveStats ? '暂无数据' : '未接入'
+  const pvText = pvValue ? `${pvValue} 次` : enableLiveStats ? '暂无数据' : '未接入'
 
   const statusItems = [
     {
@@ -135,7 +139,7 @@ export default function SiteStatusPanel({
   ]
 
   return (
-    <div className="rounded-[26px] border border-gray-100 bg-white p-5 shadow-[0_4px_20px_rgba(15,23,42,0.04)] dark:border-gray-800 dark:bg-gray-950/90 dark:shadow-[0_10px_24px_rgba(2,6,23,0.16)]">
+    <div className="rounded-[26px] border border-slate-200/80 bg-white/88 p-5 shadow-[0_16px_34px_-30px_rgba(15,23,42,0.45)] dark:border-gray-800 dark:bg-slate-950/88">
       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">站点状态</p>
       <div className="mt-5 space-y-4">
         {statusItems.map((item, index) => (

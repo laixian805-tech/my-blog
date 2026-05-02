@@ -2,9 +2,10 @@
 
 import { Fragment, type ReactNode, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { formatDate } from 'pliny/utils/formatDate'
+import ArchiveCard from '@/components/archive/ArchiveCard'
 import Link from '@/components/Link'
 import siteMetadata from '@/data/siteMetadata'
+import { type ArchiveListItem } from '@/lib/archive'
 import {
   SEARCH_INDEX_PUBLIC_PATH,
   type SearchIndexItem,
@@ -22,19 +23,6 @@ type SearchTab = 'all' | SearchSection
 type SearchIndexStatus = 'idle' | 'loading' | 'ready' | 'error'
 
 const exampleQueries = ['FastAPI', 'GitHub Pages', 'OWASP', 'VulnHub', 'SQLi']
-
-const sectionMeta: Record<SearchSection, { label: string; badgeClassName: string }> = {
-  blog: {
-    label: 'Blog',
-    badgeClassName:
-      'bg-sky-50 text-sky-700 ring-1 ring-sky-100 dark:bg-sky-500/12 dark:text-sky-200 dark:ring-sky-500/20',
-  },
-  security: {
-    label: 'Security',
-    badgeClassName:
-      'bg-rose-50 text-rose-700 ring-1 ring-rose-100 dark:bg-rose-500/12 dark:text-rose-200 dark:ring-rose-500/20',
-  },
-}
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -332,29 +320,41 @@ function NoResultsState({ query }: { query: string }) {
 }
 
 function SearchResultCard({ item, tokens }: { item: SearchResultItem; tokens: string[] }) {
+  const archiveItem: ArchiveListItem = {
+    id: `${item.section}-${item.path}`,
+    title: item.title,
+    href: `/${item.path}`,
+    summary: item.snippet || item.summary || item.excerptSource.slice(0, 140),
+    section: item.section,
+    dateLabel: new Intl.DateTimeFormat(siteMetadata.locale, { dateStyle: 'medium' }).format(
+      new Date(item.date)
+    ),
+    dateValue: item.date,
+    yearGroup: String(new Date(item.date).getFullYear()),
+  }
+
   return (
-    <article className="rounded-[28px] border border-gray-200 bg-white px-6 py-5 shadow-sm transition hover:border-sky-300 hover:shadow-md dark:border-gray-800 dark:bg-gray-950/70 dark:hover:border-sky-500/60">
-      <div className="flex flex-wrap items-center gap-3">
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${sectionMeta[item.section].badgeClassName}`}
-        >
-          {sectionMeta[item.section].label}
-        </span>
-        <time dateTime={item.date} className="text-sm font-medium text-gray-500 dark:text-gray-400">
-          {formatDate(item.date, siteMetadata.locale)}
-        </time>
-      </div>
-
-      <h2 className="mt-3 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-        <Link href={`/${item.path}`}>{highlightText(item.title, tokens)}</Link>
-      </h2>
-
-      <p className="mt-3 text-sm leading-7 text-gray-600 dark:text-gray-300">
-        {highlightText(item.snippet || item.summary || item.excerptSource.slice(0, 140), tokens)}
-      </p>
-
-      <div className="mt-4 text-xs text-slate-400 dark:text-slate-500">{item.path}</div>
-    </article>
+    <ArchiveCard
+      item={archiveItem}
+      showSectionBadge
+      titleContent={<>{highlightText(item.title, tokens)}</>}
+      summaryContent={
+        <>
+          {highlightText(item.snippet || item.summary || item.excerptSource.slice(0, 140), tokens)}
+        </>
+      }
+      footerContent={
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <Link
+            href={`/${item.path}`}
+            className="font-semibold text-emerald-700 dark:text-emerald-300"
+          >
+            继续查看 &rarr;
+          </Link>
+          <span className="text-xs text-slate-400 dark:text-slate-500">{item.path}</span>
+        </div>
+      }
+    />
   )
 }
 

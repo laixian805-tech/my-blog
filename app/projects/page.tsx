@@ -1,32 +1,20 @@
 import projectsData from '@/data/projectsData'
-import Card from '@/components/Card'
 import { genPageMetadata } from 'app/seo'
+import ArchiveCollection from '@/components/archive/ArchiveCollection'
+import { mapProjectsToArchiveItems } from '@/lib/archive'
 
 export const metadata = genPageMetadata({ title: '项目' })
 
 export default function Projects() {
+  const items = mapProjectsToArchiveItems(projectsData)
+
   return (
-    <>
-      <div className="divide-y divide-gray-200 dark:divide-gray-700">
-        <div className="space-y-2 pt-6 pb-8 md:space-y-5">
-          <h1 className="text-3xl leading-9 font-extrabold tracking-tight text-gray-900 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14 dark:text-gray-100">
-            项目
-          </h1>
-        </div>
-        <div className="container py-12">
-          <div className="-m-4 flex flex-wrap">
-            {projectsData.map((d) => (
-              <Card
-                key={d.title}
-                title={d.title}
-                description={d.description}
-                imgSrc={d.imgSrc}
-                href={d.href}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
+    <ArchiveCollection
+      title="项目归档"
+      eyebrow="Projects Archive"
+      description="把持续维护的项目入口、复盘文章和阶段性成果统一整理成项目归档。"
+      items={items}
+      emptyMessage="还没有整理可公开展示的项目条目。"
+    />
   )
 }
